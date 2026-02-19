@@ -281,7 +281,7 @@ export class VersionHistoryService {
       span?.setAttribute('content.type', query.contentType);
       span?.setAttribute('content.slug', query.slug);
 
-      logger.debug('Fetching version history', query as Record<string, unknown>);
+      logger.debug('Fetching version history', query as unknown as Record<string, unknown>);
 
       const index = await this.getVersionIndex(
         query.contentType,
