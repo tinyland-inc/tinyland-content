@@ -74,7 +74,7 @@ let _config: ContentServiceConfig | null = null;
  *
  * @example
  * ```typescript
- * import { configureContent } from '@tinyland-inc/tinyland-content';
+ * import { configureContent } from '@tummycrypt/tinyland-content';
  *
  * configureContent({
  *   contentDir: './src/content',

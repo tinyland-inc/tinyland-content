@@ -1,5 +1,5 @@
 {
-  "name": "@tinyland-inc/tinyland-content",
+  "name": "@tummycrypt/tinyland-content",
   "version": "0.1.0",
   "description": "Content management services for markdown-based content with versioning, scheduling, and relationship resolution",
   "type": "module",
@@ -25,7 +25,10 @@
       "import": "./dist/scheduling/index.js"
     }
   },
-  "files": ["dist", "LICENSE"],
+  "files": [
+    "dist",
+    "LICENSE"
+  ],
   "scripts": {
     "build": "tsc",
     "dev": "tsc --watch",
@@ -35,7 +38,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@tinyland-inc/tinyland-content-types": "workspace:*",
+    "@tummycrypt/tinyland-content-types": "workspace:*",
     "gray-matter": "^4.0.3",
     "nanoid": "^5.0.0",
     "diff": "^7.0.0"
@@ -53,8 +56,23 @@
     "date-fns-tz": ">=3.0.0"
   },
   "peerDependenciesMeta": {
-    "node-cron": { "optional": true },
-    "date-fns-tz": { "optional": true }
+    "node-cron": {
+      "optional": true
+    },
+    "date-fns-tz": {
+      "optional": true
+    }
   },
-  "engines": { "node": ">=22.0.0" }
+  "engines": {
+    "node": ">=22.0.0"
+  },
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org/",
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://gitlab.com/tinyland/projects/tinyland.dev.git",
+    "directory": "packages/tinyland-content"
+  }
 }

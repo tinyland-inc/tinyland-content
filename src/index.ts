@@ -1,5 +1,5 @@
 /**
- * @tinyland-inc/tinyland-content
+ * @tummycrypt/tinyland-content
  *
  * Content management services for markdown-based content with versioning,
  * scheduling, and relationship resolution.
@@ -12,7 +12,7 @@
  *   createVersionHistory,
  *   createScheduledPublisher,
  *   createContentRelationshipService,
- * } from '@tinyland-inc/tinyland-content';
+ * } from '@tummycrypt/tinyland-content';
  *
  * // Initialize once at startup
  * configureContent({
@@ -33,7 +33,7 @@
  * await scheduler.initialize();
  * ```
  *
- * @module @tinyland-inc/tinyland-content
+ * @module @tummycrypt/tinyland-content
  */
 
 // Configuration

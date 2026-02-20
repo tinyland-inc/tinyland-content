@@ -2,7 +2,7 @@
  * Shared types for the content package.
  *
  * These types are defined locally to avoid hard coupling to the monorepo's
- * type system. The `@tinyland-inc/tinyland-content-types` workspace dependency
+ * type system. The `@tummycrypt/tinyland-content-types` workspace dependency
  * provides the canonical content type definitions; these are supplementary
  * types specific to content loading and management operations.
  *
