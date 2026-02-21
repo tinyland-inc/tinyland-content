@@ -9,6 +9,9 @@ Dual-mode build: works with both pnpm (standalone) and Bazel (CI/production).
 load("@aspect_rules_js//js:defs.bzl", "js_library", "js_test")
 load("@aspect_rules_js//npm:defs.bzl", "npm_package")
 load("@aspect_rules_ts//ts:defs.bzl", "ts_project")
+load("@npm//:defs.bzl", "npm_link_all_packages")
+
+npm_link_all_packages(name = "node_modules")
 
 
 ts_project(
@@ -26,13 +29,13 @@ ts_project(
     tsconfig = ":tsconfig.json",
     transpiler = "tsc",
     deps = [
-        "//:node_modules",
+        ":node_modules",
         "//packages:tsconfig_base",
-        "//:node_modules/gray-matter",
-        "//:node_modules/nanoid",
-        "//:node_modules/diff",
-        "//:node_modules/@types/diff",
-        "//:node_modules/@types/node",
+        ":node_modules/gray-matter",
+        ":node_modules/nanoid",
+        ":node_modules/diff",
+        ":node_modules/@types/diff",
+        ":node_modules/@types/node",
         "//packages/tinyland-content-types:tinyland_content_types",
     ],
     visibility = ["//visibility:public"],
@@ -58,8 +61,8 @@ ts_project(
     transpiler = "tsc",
     deps = [
         ":tinyland_content",
-        "//:node_modules",
-        "//:node_modules/vitest",
+        ":node_modules",
+        ":node_modules/vitest",
     ],
 )
 
@@ -68,8 +71,8 @@ js_test(
     data = [
         ":tinyland_content",
         ":tinyland_content_test_lib",
-        "//:node_modules",
-        "//:node_modules/vitest",
+        ":node_modules",
+        ":node_modules/vitest",
         "vitest.config.ts",
     ],
     entry_point = "//:vitest_bin",
