@@ -1,8 +1,8 @@
-/**
- * Blog Loader Tests
- *
- * Tests the blogLoader module's filtering, pagination, and utility functions.
- */
+
+
+
+
+
 
 import { describe, it, expect } from 'vitest';
 import {
@@ -14,18 +14,18 @@ import {
 describe('blogLoader utilities', () => {
   describe('calculateReadingTime', () => {
     it('should calculate reading time for short content', () => {
-      const content = 'Hello world'; // 2 words
-      expect(calculateReadingTime(content)).toBe(1); // ceil(2/200) = 1
+      const content = 'Hello world'; 
+      expect(calculateReadingTime(content)).toBe(1); 
     });
 
     it('should calculate reading time for longer content', () => {
       const words = Array(400).fill('word').join(' ');
-      expect(calculateReadingTime(words)).toBe(2); // 400/200 = 2
+      expect(calculateReadingTime(words)).toBe(2); 
     });
 
     it('should round up reading time', () => {
       const words = Array(201).fill('word').join(' ');
-      expect(calculateReadingTime(words)).toBe(2); // ceil(201/200) = 2
+      expect(calculateReadingTime(words)).toBe(2); 
     });
   });
 
@@ -50,7 +50,7 @@ describe('blogLoader utilities', () => {
         'This is a test of the excerpt extraction function that should truncate properly at a word boundary.';
       const excerpt = extractExcerpt(content, 50);
 
-      expect(excerpt.length).toBeLessThanOrEqual(53); // 50 + '...'
+      expect(excerpt.length).toBeLessThanOrEqual(53); 
       expect(excerpt.endsWith('...')).toBe(true);
     });
 

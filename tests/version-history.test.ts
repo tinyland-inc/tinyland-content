@@ -1,13 +1,13 @@
-/**
- * VersionHistoryService Tests
- *
- * Tests content versioning and diff generation with in-memory store.
- */
+
+
+
+
+
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { configureContent, resetContentConfig } from '../src/config.js';
 
-// In-memory store for mock fs
+
 const fsStore: Record<string, string> = {};
 const fsDirs: Set<string> = new Set();
 
@@ -18,7 +18,7 @@ function clearFsStore() {
   fsDirs.clear();
 }
 
-// Mock fs/promises
+
 vi.mock('fs/promises', () => ({
   mkdir: vi.fn(async (dirPath: string) => {
     fsDirs.add(dirPath);
@@ -60,7 +60,7 @@ describe('VersionHistoryService', () => {
     vi.clearAllMocks();
   });
 
-  // Lazy import to pick up mocks
+  
   async function getService() {
     const { createVersionHistory } = await import('../src/versioning/index.js');
     return createVersionHistory();

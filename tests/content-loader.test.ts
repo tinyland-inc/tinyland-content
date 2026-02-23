@@ -1,13 +1,13 @@
-/**
- * ContentLoaderService Tests
- *
- * Tests file-based content loading with mocked filesystem.
- */
+
+
+
+
+
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { configureContent, resetContentConfig } from '../src/config.js';
 
-// In-memory store for mock filesystem
+
 const mockFiles: Record<string, string> = {};
 const mockDirs: Record<string, string[]> = {};
 
@@ -22,7 +22,7 @@ function setupMockFs(files: Record<string, string>, dirs: Record<string, string[
   Object.assign(mockDirs, dirs);
 }
 
-// Mock fs module
+
 vi.mock('fs', () => ({
   readFileSync: vi.fn((filePath: string) => {
     const content = mockFiles[filePath];

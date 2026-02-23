@@ -1,13 +1,13 @@
-/**
- * ScheduledPublishingService Tests
- *
- * Tests scheduling logic without federation (federation replaced by hooks).
- */
+
+
+
+
+
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { configureContent, resetContentConfig } from '../src/config.js';
 
-// In-memory store for mock fs
+
 const fsStore: Record<string, string> = {};
 
 function clearFsStore() {
@@ -16,7 +16,7 @@ function clearFsStore() {
   }
 }
 
-// Mock fs/promises
+
 vi.mock('fs/promises', () => ({
   mkdir: vi.fn(async () => {}),
   readFile: vi.fn(async (filePath: string) => {
@@ -34,7 +34,7 @@ vi.mock('fs/promises', () => ({
   rm: vi.fn(async () => {}),
 }));
 
-// Mock node-cron as unavailable (optional peer dep)
+
 vi.mock('node-cron', () => {
   throw new Error('node-cron not available');
 });
@@ -206,14 +206,14 @@ describe('ScheduledPublishingService', () => {
       const onUnpublish = vi.fn();
 
       service.setHooks({ onPublish, onUnpublish });
-      // No error means hooks were accepted
+      
     });
 
     it('should accept hooks via factory', async () => {
       const { createScheduledPublisher } = await import('../src/scheduling/index.js');
       const onPublish = vi.fn();
       const svc = createScheduledPublisher({ onPublish });
-      // No error means hooks were accepted
+      
       expect(svc).toBeDefined();
     });
   });
@@ -232,7 +232,7 @@ describe('ScheduledPublishingService', () => {
         'testuser'
       );
 
-      // Set up the content file the service will try to read
+      
       const contentFilePath = '/test/content/blog/past-post.md';
       fsStore[contentFilePath] = [
         '---',
@@ -276,7 +276,7 @@ describe('ScheduledPublishingService', () => {
       const service = await getService();
       await service.initialize();
       await service.shutdown();
-      // No error means clean shutdown
+      
     });
   });
 });
