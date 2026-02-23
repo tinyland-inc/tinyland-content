@@ -1,42 +1,42 @@
-/**
- * @tummycrypt/tinyland-content
- *
- * Content management services for markdown-based content with versioning,
- * scheduling, and relationship resolution.
- *
- * Usage:
- * ```typescript
- * import {
- *   configureContent,
- *   createContentLoader,
- *   createVersionHistory,
- *   createScheduledPublisher,
- *   createContentRelationshipService,
- * } from '@tummycrypt/tinyland-content';
- *
- * // Initialize once at startup
- * configureContent({
- *   contentDir: './src/content',
- *   dataDir: './data',
- *   logger: myStructuredLogger,
- *   tracer: myOtelTracer,
- * });
- *
- * // Use services
- * const loader = createContentLoader();
- * const posts = await loader.loadBlogPosts({ handle: 'jsullivan' });
- *
- * const versionHistory = createVersionHistory();
- * await versionHistory.saveVersion('blog', 'my-post', frontmatter, content, 'edit', 'jsullivan');
- *
- * const scheduler = createScheduledPublisher();
- * await scheduler.initialize();
- * ```
- *
- * @module @tummycrypt/tinyland-content
- */
 
-// Configuration
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 export {
   configureContent,
   getContentConfig,
@@ -52,7 +52,7 @@ export type {
   Span,
 } from './config.js';
 
-// Types
+
 export type {
   ContentVisibility,
   ContentType,
@@ -81,7 +81,7 @@ export {
   CONTENT_VISIBILITY_VALUES,
 } from './types.js';
 
-// Services
+
 export {
   loadUserContent,
   loadBlogPosts,
@@ -132,13 +132,13 @@ export type {
   OfferContentItem,
 } from './services/index.js';
 
-// Versioning
+
 export {
   VersionHistoryService,
   createVersionHistory,
 } from './versioning/index.js';
 
-// Scheduling
+
 export {
   ScheduledPublishingService,
   createScheduledPublisher,

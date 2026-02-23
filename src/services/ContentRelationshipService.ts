@@ -1,12 +1,12 @@
-/**
- * Content Relationship Service
- *
- * Resolves bidirectional relationships between content types.
- * Handles product-to-post and post-to-product cross-references,
- * video thumbnail resolution, and reference extraction.
- *
- * @module services/ContentRelationshipService
- */
+
+
+
+
+
+
+
+
+
 
 import { join } from 'path';
 import { existsSync, readFileSync, readdirSync } from 'fs';
@@ -18,26 +18,26 @@ import type {
   VideoEmbed,
 } from '../types.js';
 
-// ============================================================================
-// Directory Helpers
-// ============================================================================
+
+
+
 
 function getContentDir(subdir: string): string {
   const config = getContentConfig();
   return join(config.contentDir, subdir);
 }
 
-// ============================================================================
-// Post Relationship Resolution
-// ============================================================================
 
-/**
- * Resolve all relationships for a blog post
- *
- * @param post - Blog post frontmatter with relatedProducts, relatedPosts, videos, references
- * @param context - Relationship context with current slug, type, and author
- * @returns Resolved relationships including loaded related content
- */
+
+
+
+
+
+
+
+
+
+
 export async function resolvePostRelationships(
   post: Record<string, unknown>,
   context: RelationshipContext
@@ -54,7 +54,7 @@ export async function resolvePostRelationships(
     ),
   ]);
 
-  // Resolve video thumbnails automatically
+  
   const videosWithThumbnails = ((post.videos as VideoEmbed[]) || []).map(
     (video) => ({
       ...video,
@@ -71,13 +71,13 @@ export async function resolvePostRelationships(
   };
 }
 
-// ============================================================================
-// Slug Resolution
-// ============================================================================
 
-/**
- * Resolve product slugs to full frontmatter with authorHandle
- */
+
+
+
+
+
+
 export async function resolveProductSlugs(
   slugs: string[],
   authorHandle: string
@@ -106,9 +106,9 @@ export async function resolveProductSlugs(
   return products;
 }
 
-/**
- * Resolve post slugs to full frontmatter with authorHandle
- */
+
+
+
 export async function resolvePostSlugs(
   slugs: string[],
   authorHandle: string,
@@ -140,13 +140,13 @@ export async function resolvePostSlugs(
   return posts;
 }
 
-// ============================================================================
-// Reverse Lookups
-// ============================================================================
 
-/**
- * Find posts that reference a product (reverse lookup)
- */
+
+
+
+
+
+
 export async function findPostsReferencingProduct(
   productSlug: string,
   authorHandle: string
@@ -178,7 +178,7 @@ export async function findPostsReferencingProduct(
     );
   }
 
-  // Sort by date (newest first)
+  
   return referencingPosts.sort((a, b) => {
     const dateA = new Date(
       (a.publishedAt as string) || (a.date as string) || 0
@@ -190,9 +190,9 @@ export async function findPostsReferencingProduct(
   });
 }
 
-/**
- * Find products referenced by a post
- */
+
+
+
 export async function findProductsReferencedByPost(
   postSlug: string,
   authorHandle: string
@@ -218,13 +218,13 @@ export async function findProductsReferencedByPost(
   }
 }
 
-// ============================================================================
-// Video Helpers
-// ============================================================================
 
-/**
- * Extract video ID from a video embed based on platform
- */
+
+
+
+
+
+
 export function extractVideoId(video: VideoEmbed): string | undefined {
   switch (video.platform) {
     case 'youtube':
@@ -238,9 +238,9 @@ export function extractVideoId(video: VideoEmbed): string | undefined {
   }
 }
 
-/**
- * Get video thumbnail URL with automatic resolution
- */
+
+
+
 export function getVideoThumbnailUrl(video: VideoEmbed): string {
   if (video.thumbnailUrl) {
     return video.thumbnailUrl;
@@ -254,7 +254,7 @@ export function getVideoThumbnailUrl(video: VideoEmbed): string {
         : '';
     }
     case 'vimeo': {
-      // Vimeo oEmbed endpoint requires async API call
+      
       return '';
     }
     case 'peertube': {
@@ -269,9 +269,9 @@ export function getVideoThumbnailUrl(video: VideoEmbed): string {
   }
 }
 
-/**
- * Extract YouTube video ID from URL
- */
+
+
+
 export function extractYouTubeId(url: string): string | null {
   const patterns = [
     /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\?\/]+)/,
@@ -286,9 +286,9 @@ export function extractYouTubeId(url: string): string | null {
   return null;
 }
 
-/**
- * Extract Vimeo video ID from URL
- */
+
+
+
 export function extractVimeoId(url: string): string | null {
   const patterns = [
     /vimeo\.com\/(\d+)/,
@@ -304,9 +304,9 @@ export function extractVimeoId(url: string): string | null {
   return null;
 }
 
-/**
- * Extract PeerTube instance and video ID from URL
- */
+
+
+
 export function extractPeerTubeInfo(
   url: string
 ): { host: string; videoId: string } | null {
@@ -327,25 +327,25 @@ export function extractPeerTubeInfo(
       }
     }
   } catch {
-    // Invalid URL
+    
   }
 
   return null;
 }
 
-// ============================================================================
-// Factory
-// ============================================================================
 
-/**
- * Create a content relationship resolver with the current config.
- *
- * @example
- * ```typescript
- * const relationships = createContentRelationshipService();
- * const resolved = await relationships.resolvePostRelationships(post, context);
- * ```
- */
+
+
+
+
+
+
+
+
+
+
+
+
 export function createContentRelationshipService() {
   return {
     resolvePostRelationships,

@@ -1,12 +1,12 @@
-/**
- * Scheduled Publishing Service
- *
- * Handles automatic publishing of scheduled content.
- * Federation behavior (ActivityPub) is replaced with optional publish hooks
- * that allow the ActivityPub package to inject federation behavior later.
- *
- * @module scheduling
- */
+
+
+
+
+
+
+
+
+
 
 import * as fs from 'fs/promises';
 import * as path from 'path';
@@ -21,20 +21,20 @@ import type {
   ContentItem,
 } from '../types.js';
 
-// Re-export types
+
 export type { ScheduledItem, PublishResult, PublishHooks, ScheduleStorage };
 
-// ============================================================================
-// Scheduled Publishing Service
-// ============================================================================
 
-/**
- * Scheduled Publishing Service
- *
- * Manages scheduling and automatic publishing of content items.
- * Uses config injection for data directory and optional publish hooks
- * for extensibility (e.g., ActivityPub federation).
- */
+
+
+
+
+
+
+
+
+
+
 export class ScheduledPublishingService {
   private cronJob: { stop(): void } | null = null;
   private initialized = false;
@@ -46,30 +46,30 @@ export class ScheduledPublishingService {
     return path.join(config.dataDir || './data', 'scheduled-publishing.json');
   }
 
-  /**
-   * Set publish hooks for extensibility (e.g., ActivityPub federation)
-   *
-   * @example
-   * ```typescript
-   * scheduler.setHooks({
-   *   onPublish: async (item) => {
-   *     await federateContent(item); // ActivityPub Create activity
-   *   },
-   *   onUnpublish: async (item) => {
-   *     await defederateContent(item); // ActivityPub Delete activity
-   *   },
-   * });
-   * ```
-   */
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   setHooks(hooks: PublishHooks): void {
     this.hooks = hooks;
   }
 
-  /**
-   * Initialize the cron job (call on server startup)
-   *
-   * Requires optional peer dependency `node-cron`.
-   */
+  
+
+
+
+
   async initialize(): Promise<void> {
     return withSpan('scheduled_publishing.initialize', async (span) => {
       const logger = getLogger();
@@ -88,7 +88,7 @@ export class ScheduledPublishingService {
         });
       }
 
-      // Dynamically import node-cron (optional peer dependency)
+      
       try {
         const cron = await import('node-cron');
         this.cronJob = cron.default.schedule('* * * * *', async () => {
@@ -114,9 +114,9 @@ export class ScheduledPublishingService {
     }) as Promise<void>;
   }
 
-  /**
-   * Schedule content for publishing
-   */
+  
+
+
   async scheduleContent(
     contentType: ContentType,
     slug: string,
@@ -168,9 +168,9 @@ export class ScheduledPublishingService {
     }) as Promise<ScheduledItem>;
   }
 
-  /**
-   * Cancel scheduled publishing
-   */
+  
+
+
   async cancelSchedule(
     contentType: ContentType,
     slug: string
@@ -199,9 +199,9 @@ export class ScheduledPublishingService {
     }) as Promise<boolean>;
   }
 
-  /**
-   * Get all scheduled items
-   */
+  
+
+
   async getScheduledItems(): Promise<ScheduledItem[]> {
     return withSpan('scheduled_publishing.get_scheduled_items', async (span) => {
       const schedule = await this.readScheduleFile();
@@ -218,9 +218,9 @@ export class ScheduledPublishingService {
     }) as Promise<ScheduledItem[]>;
   }
 
-  /**
-   * Get scheduled item for specific content
-   */
+  
+
+
   async getScheduledItem(
     contentType: ContentType,
     slug: string
@@ -240,9 +240,9 @@ export class ScheduledPublishingService {
     }) as Promise<ScheduledItem | null>;
   }
 
-  /**
-   * Process items ready for publishing (called by cron or manually)
-   */
+  
+
+
   async processScheduledItems(): Promise<PublishResult[]> {
     return withSpan(
       'scheduled_publishing.process_scheduled_items',
@@ -323,9 +323,9 @@ export class ScheduledPublishingService {
     ) as Promise<PublishResult[]>;
   }
 
-  /**
-   * Publish a single item
-   */
+  
+
+
   private async publishItem(item: ScheduledItem): Promise<PublishResult> {
     return withSpan('scheduled_publishing.publish_item', async (span) => {
       const logger = getLogger();
@@ -336,7 +336,7 @@ export class ScheduledPublishingService {
 
       const publishedAt = new Date().toISOString();
 
-      // Update content file to set status to 'published'
+      
       const contentPath = this.getContentFilePath(
         item.contentType,
         item.slug
@@ -356,7 +356,7 @@ export class ScheduledPublishingService {
 
       span?.setAttribute('file_updated', true);
 
-      // Call publish hook if set (replaces federation logic)
+      
       let federated = false;
       let federationError: string | undefined;
 
@@ -402,9 +402,9 @@ export class ScheduledPublishingService {
     }) as Promise<PublishResult>;
   }
 
-  /**
-   * Stop the cron job (for graceful shutdown)
-   */
+  
+
+
   async shutdown(): Promise<void> {
     return withSpan('scheduled_publishing.shutdown', async (span) => {
       const logger = getLogger();
@@ -421,16 +421,16 @@ export class ScheduledPublishingService {
     }) as Promise<void>;
   }
 
-  // ============================================================================
-  // File System Helpers
-  // ============================================================================
+  
+  
+  
 
   private async ensureDataDirectory(): Promise<void> {
     const dataDir = path.dirname(this.scheduleFile);
     try {
       await fs.mkdir(dataDir, { recursive: true });
     } catch {
-      // Directory might already exist
+      
     }
   }
 
@@ -477,30 +477,30 @@ export class ScheduledPublishingService {
 
     const dir = contentDirs[contentType];
 
-    // Default to .md
+    
     return path.join(config.contentDir, dir, `${slug}.md`);
   }
 }
 
-// ============================================================================
-// Factory
-// ============================================================================
 
-/**
- * Create a ScheduledPublishingService instance.
- *
- * @param hooks - Optional publish hooks for federation extensibility
- *
- * @example
- * ```typescript
- * const scheduler = createScheduledPublisher({
- *   onPublish: async (item) => {
- *     console.log('Published:', item.slug);
- *   }
- * });
- * await scheduler.initialize();
- * ```
- */
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 export function createScheduledPublisher(
   hooks?: PublishHooks
 ): ScheduledPublishingService {

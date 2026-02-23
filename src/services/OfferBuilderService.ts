@@ -1,20 +1,20 @@
-/**
- * Offer Builder Service
- *
- * Builds schema.org Offer objects from product transaction configurations.
- * Used for commerce federation and product page structured data.
- *
- * This is a framework-agnostic extraction that replaces the monorepo's
- * `$lib/server/services/OfferBuilderService.ts`.
- *
- * @module services/OfferBuilderService
- */
+
+
+
+
+
+
+
+
+
+
+
 
 import { getLogger, withSpan } from '../config.js';
 
-// ============================================================================
-// Types
-// ============================================================================
+
+
+
 
 export type OfferAvailability =
   | 'InStock'
@@ -106,20 +106,20 @@ export interface ValidationResult {
   errors: string[];
 }
 
-/** Minimal content item interface for offer building */
+
 export interface OfferContentItem {
   slug: string;
   title?: string;
   frontmatter: Record<string, unknown>;
 }
 
-// ============================================================================
-// Transaction Mappings
-// ============================================================================
 
-/**
- * Mapping configuration for all 15 transaction types
- */
+
+
+
+
+
+
 export const TRANSACTION_MAPPINGS: Record<string, TransactionMapping> = {
   inquiry: {
     transactionType: 'inquiry',
@@ -288,14 +288,14 @@ export const TRANSACTION_MAPPINGS: Record<string, TransactionMapping> = {
   },
 };
 
-// ============================================================================
-// Offer Builder Service
-// ============================================================================
+
+
+
 
 export class OfferBuilderService {
-  /**
-   * Build schema.org Offer from transaction config
-   */
+  
+
+
   buildOffer(
     product: OfferContentItem,
     transaction: TransactionConfig,
@@ -366,9 +366,9 @@ export class OfferBuilderService {
     });
   }
 
-  /**
-   * Build all Offers for a product
-   */
+  
+
+
   buildAllOffers(product: OfferContentItem, baseUrl: string): SchemaOffer[] {
     return withSpan('OfferBuilderService.buildAllOffers', () => {
       const fm = product.frontmatter;
@@ -384,9 +384,9 @@ export class OfferBuilderService {
     });
   }
 
-  /**
-   * Convert Offer to ActivityPub attachment
-   */
+  
+
+
   offerToActivityPubAttachment(offer: SchemaOffer): {
     type: 'PropertyValue';
     name: string;
@@ -410,9 +410,9 @@ export class OfferBuilderService {
     };
   }
 
-  /**
-   * Build price specification
-   */
+  
+
+
   private buildPriceSpec(
     price: number | string,
     currency: string,
@@ -435,17 +435,17 @@ export class OfferBuilderService {
     return spec;
   }
 
-  /**
-   * Get payment methods for transaction type
-   */
+  
+
+
   getPaymentMethods(transactionType: string): PaymentMethod[] {
     const mapping = TRANSACTION_MAPPINGS[transactionType];
     return mapping?.paymentMethods || [];
   }
 
-  /**
-   * Validate transaction configuration
-   */
+  
+
+
   validateTransaction(transaction: TransactionConfig): ValidationResult {
     const errors: string[] = [];
 
@@ -512,9 +512,9 @@ export class OfferBuilderService {
     };
   }
 
-  /**
-   * Get required action hint for non-monetary transactions
-   */
+  
+
+
   private getRequiredAction(transactionType: string): string {
     const actions: Record<string, string> = {
       inquiry: 'contact',
@@ -525,9 +525,9 @@ export class OfferBuilderService {
     return actions[transactionType] || 'visit';
   }
 
-  /**
-   * Get display name for transaction type
-   */
+  
+
+
   private getTransactionDisplayName(transactionType: string): string {
     const names: Record<string, string> = {
       inquiry: 'Contact',
@@ -549,9 +549,9 @@ export class OfferBuilderService {
     return names[transactionType] || transactionType;
   }
 
-  /**
-   * Get all transaction types with metadata
-   */
+  
+
+
   getAllTransactionTypes(): Array<{
     type: string;
     displayName: string;
@@ -571,13 +571,13 @@ export class OfferBuilderService {
   }
 }
 
-// ============================================================================
-// Factory
-// ============================================================================
 
-/**
- * Create an OfferBuilderService instance.
- */
+
+
+
+
+
+
 export function createOfferBuilder(): OfferBuilderService {
   return new OfferBuilderService();
 }

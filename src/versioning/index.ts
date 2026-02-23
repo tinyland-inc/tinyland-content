@@ -1,22 +1,22 @@
-/**
- * Version History Service
- *
- * Comprehensive content versioning for file-based CMS.
- * Tracks changes, generates diffs, and enables version restoration.
- *
- * Features:
- * - Full version history with metadata
- * - Unified diff generation
- * - Version comparison
- * - Restore previous versions
- * - Automatic pruning of old versions
- *
- * Storage format:
- * - {dataDir}/versions/{contentType}/{slug}/versions.json - Index
- * - {dataDir}/versions/{contentType}/{slug}/v{NNN}.json - Individual versions
- *
- * @module versioning
- */
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 import { nanoid } from 'nanoid';
 import { createTwoFilesPatch } from 'diff';
@@ -30,28 +30,28 @@ import type {
   VersionComparison,
 } from '../types.js';
 
-// Re-export types
+
 export type { ContentVersion, VersionIndex, VersionQuery, VersionComparison };
 
-// ============================================================================
-// Version History Service
-// ============================================================================
 
-/**
- * Version History Service
- *
- * Manages content versioning for file-based CMS.
- * Uses config injection for the data directory path.
- */
+
+
+
+
+
+
+
+
+
 export class VersionHistoryService {
   private get versionsDir(): string {
     const config = getContentConfig();
     return path.join(config.dataDir || './data', 'versions');
   }
 
-  /**
-   * Ensure version directory exists for content
-   */
+  
+
+
   private async ensureVersionDirectory(
     contentType: string,
     slug: string
@@ -61,9 +61,9 @@ export class VersionHistoryService {
     return versionPath;
   }
 
-  /**
-   * Get or create version index
-   */
+  
+
+
   private async getVersionIndex(
     contentType: string,
     slug: string
@@ -82,9 +82,9 @@ export class VersionHistoryService {
     }
   }
 
-  /**
-   * Save version index
-   */
+  
+
+
   private async saveVersionIndex(
     contentType: string,
     slug: string,
@@ -95,16 +95,16 @@ export class VersionHistoryService {
     await fs.writeFile(indexPath, JSON.stringify(index, null, 2), 'utf-8');
   }
 
-  /**
-   * Format version number as padded string (e.g., 1 -> "v001")
-   */
+  
+
+
   private formatVersionNumber(version: number): string {
     return `v${version.toString().padStart(3, '0')}`;
   }
 
-  /**
-   * Generate diff between two content strings
-   */
+  
+
+
   private generateContentDiff(
     oldContent: string,
     newContent: string,
@@ -120,9 +120,9 @@ export class VersionHistoryService {
     );
   }
 
-  /**
-   * Generate frontmatter diff
-   */
+  
+
+
   private generateFrontmatterDiff(
     oldFrontmatter: Record<string, unknown>,
     newFrontmatter: Record<string, unknown>
@@ -153,18 +153,18 @@ export class VersionHistoryService {
     return diff;
   }
 
-  /**
-   * Save a new version of content
-   *
-   * @param contentType - Type of content (blog, event, etc.)
-   * @param slug - Content slug
-   * @param frontmatter - Full frontmatter object
-   * @param content - Markdown content
-   * @param changeType - Type of change
-   * @param createdBy - User handle
-   * @param changeSummary - Optional change description
-   * @returns Created version record
-   */
+  
+
+
+
+
+
+
+
+
+
+
+
   async saveVersion(
     contentType: string,
     slug: string,
@@ -268,12 +268,12 @@ export class VersionHistoryService {
     }) as Promise<ContentVersion>;
   }
 
-  /**
-   * Get version history for content
-   *
-   * @param query - Version query parameters
-   * @returns Array of version records (newest first)
-   */
+  
+
+
+
+
+
   async getVersionHistory(query: VersionQuery): Promise<ContentVersion[]> {
     return withSpan('version_history.get_history', async (span) => {
       const logger = getLogger();
@@ -328,9 +328,9 @@ export class VersionHistoryService {
     }) as Promise<ContentVersion[]>;
   }
 
-  /**
-   * Get a specific version
-   */
+  
+
+
   async getVersion(
     contentType: string,
     slug: string,
@@ -358,9 +358,9 @@ export class VersionHistoryService {
     }
   }
 
-  /**
-   * Compare two versions
-   */
+  
+
+
   async compareVersions(
     contentType: string,
     slug: string,
@@ -408,12 +408,12 @@ export class VersionHistoryService {
     }) as Promise<VersionComparison>;
   }
 
-  /**
-   * Restore a previous version
-   *
-   * Creates a NEW version with the content from the specified version.
-   * Never modifies existing version history.
-   */
+  
+
+
+
+
+
   async restoreVersion(
     contentType: string,
     slug: string,
@@ -465,9 +465,9 @@ export class VersionHistoryService {
     }) as Promise<ContentVersion>;
   }
 
-  /**
-   * Prune old versions (keep last N)
-   */
+  
+
+
   async pruneVersions(
     contentType: string,
     slug: string,
@@ -541,9 +541,9 @@ export class VersionHistoryService {
     }) as Promise<number>;
   }
 
-  /**
-   * Delete all versions for content (use with caution!)
-   */
+  
+
+
   async deleteAllVersions(
     contentType: string,
     slug: string
@@ -583,9 +583,9 @@ export class VersionHistoryService {
     }) as Promise<number>;
   }
 
-  /**
-   * Get version statistics
-   */
+  
+
+
   async getVersionStats(
     contentType: string,
     slug: string
@@ -631,19 +631,19 @@ export class VersionHistoryService {
   }
 }
 
-// ============================================================================
-// Factory
-// ============================================================================
 
-/**
- * Create a VersionHistoryService instance.
- *
- * @example
- * ```typescript
- * const versionHistory = createVersionHistory();
- * await versionHistory.saveVersion('blog', 'my-post', frontmatter, content, 'edit', 'jsullivan');
- * ```
- */
+
+
+
+
+
+
+
+
+
+
+
+
 export function createVersionHistory(): VersionHistoryService {
   return new VersionHistoryService();
 }

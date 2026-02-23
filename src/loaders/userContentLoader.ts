@@ -1,13 +1,13 @@
-/**
- * User Content Loader Utility
- *
- * Provides unified content loading from per-user directories.
- * All content lives in {contentDir}/users/{handle}/{contentType}/
- *
- * This module replaces the dual-source loader after migration to user-only structure.
- *
- * @module loaders/userContentLoader
- */
+
+
+
+
+
+
+
+
+
+
 
 import { join } from 'path';
 import { existsSync, readdirSync, readFileSync } from 'fs';
@@ -15,9 +15,9 @@ import matter from 'gray-matter';
 import { getContentConfig } from '../config.js';
 import type { LoadedContent, LoadOptions } from '../types.js';
 
-// ============================================================================
-// Content Type
-// ============================================================================
+
+
+
 
 export type ContentType =
   | 'blog'
@@ -29,9 +29,9 @@ export type ContentType =
   | 'gallery'
   | 'stacks';
 
-// ============================================================================
-// Directory Helpers
-// ============================================================================
+
+
+
 
 function getContentBase(): string {
   return getContentConfig().contentDir;
@@ -41,9 +41,9 @@ function getUsersDir(): string {
   return join(getContentBase(), 'users');
 }
 
-/**
- * Get the user-specific content directory path
- */
+
+
+
 export function getUserContentDir(
   handle: string,
   contentType: ContentType
@@ -51,30 +51,30 @@ export function getUserContentDir(
   return join(getUsersDir(), handle, contentType);
 }
 
-/**
- * Get the user's base directory
- */
+
+
+
 export function getUserBaseDir(handle: string): string {
   return join(getUsersDir(), handle);
 }
 
-/**
- * Get the user's profile.md path
- */
+
+
+
 export function getUserProfilePath(handle: string): string {
   return join(getUsersDir(), handle, 'profile.md');
 }
 
-/**
- * Check if a user directory exists
- */
+
+
+
 export function userDirectoryExists(handle: string): boolean {
   return existsSync(getUserBaseDir(handle));
 }
 
-/**
- * Get all registered user handles (users with directories)
- */
+
+
+
 export function getAllUserHandles(): string[] {
   const usersDir = getUsersDir();
 
@@ -87,23 +87,23 @@ export function getAllUserHandles(): string[] {
     .map((d) => d.name);
 }
 
-// ============================================================================
-// Core Loading Functions
-// ============================================================================
 
-/**
- * Load content from user directories
- *
- * @param contentType - Type of content to load
- * @param options - Loading options
- * @returns Array of loaded content items
- *
- * @example
- * ```typescript
- * const posts = loadUserContent('blog', { handle: 'rainbow_bird' });
- * const allPosts = loadUserContent('blog', { aggregateAll: true });
- * ```
- */
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 export function loadUserContent(
   contentType: ContentType,
   options: LoadOptions = {}
@@ -120,9 +120,9 @@ export function loadUserContent(
   return [];
 }
 
-/**
- * Load a single content item by slug
- */
+
+
+
 export function loadSingleUserContent(
   contentType: ContentType,
   slug: string,
@@ -142,9 +142,9 @@ export function loadSingleUserContent(
   return null;
 }
 
-/**
- * Find content by slug across all users
- */
+
+
+
 export function findContentBySlug(
   contentType: ContentType,
   slug: string
@@ -169,9 +169,9 @@ export function findContentBySlug(
   return null;
 }
 
-/**
- * Get all user handles that have content of a specific type
- */
+
+
+
 export function getUsersWithContent(contentType: ContentType): string[] {
   const handles: string[] = [];
   const usersDir = getUsersDir();
@@ -199,9 +199,9 @@ export function getUsersWithContent(contentType: ContentType): string[] {
   return handles;
 }
 
-/**
- * Check if a user has any content of a specific type
- */
+
+
+
 export function userHasContent(
   handle: string,
   contentType: ContentType
@@ -216,9 +216,9 @@ export function userHasContent(
   return files.length > 0;
 }
 
-/**
- * Default author handle extractor (for backwards compatibility)
- */
+
+
+
 export function extractAuthorHandle(
   metadata: Record<string, unknown>
 ): string {
@@ -256,9 +256,9 @@ export function extractAuthorHandle(
   return (metadata.handle as string) || 'unknown';
 }
 
-// ============================================================================
-// Content Type Dir Map (for write operations)
-// ============================================================================
+
+
+
 
 const CONTENT_TYPE_DIR_MAP: Record<string, ContentType> = {
   blog: 'blog',
@@ -273,13 +273,13 @@ const CONTENT_TYPE_DIR_MAP: Record<string, ContentType> = {
   video: 'videos',
   videos: 'videos',
   gallery: 'gallery',
-  profile: 'blog', // profiles are at user root level
+  profile: 'blog', 
   stacks: 'stacks',
 };
 
-/**
- * Get file path for content item by searching all user directories
- */
+
+
+
 export function getUserContentFilePath(
   contentType: string,
   slug: string
@@ -297,9 +297,9 @@ export function getUserContentFilePath(
   return null;
 }
 
-/**
- * Get file path for content item owned by a specific user
- */
+
+
+
 export function getUserContentFilePathByHandle(
   handle: string,
   contentType: string,
@@ -319,9 +319,9 @@ export function getUserContentFilePathByHandle(
   );
 }
 
-/**
- * Find content file path with automatic extension detection
- */
+
+
+
 export function findUserContentFilePath(
   handle: string,
   contentType: string,
@@ -348,9 +348,9 @@ export function findUserContentFilePath(
   return null;
 }
 
-// ============================================================================
-// Internal Loading Functions
-// ============================================================================
+
+
+
 
 function loadFromUserDirectory(
   handle: string,

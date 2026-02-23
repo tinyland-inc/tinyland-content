@@ -1,14 +1,14 @@
-/**
- * Content Loader Service
- *
- * Loads file-based content (blog posts, notes, products, events, programs, videos, profiles)
- * from markdown files in per-user directories.
- *
- * All content is loaded from per-user directories:
- * {contentDir}/users/{handle}/{contentType}/
- *
- * @module services/ContentLoaderService
- */
+
+
+
+
+
+
+
+
+
+
+
 
 import { join } from 'path';
 import { readFileSync, existsSync, readdirSync, writeFileSync, unlinkSync } from 'fs';
@@ -21,28 +21,28 @@ import type {
 } from '../types.js';
 import { migrateVisibility } from '../types.js';
 
-// ============================================================================
-// Directory Helpers
-// ============================================================================
 
-/**
- * Get the users directory path from config
- */
+
+
+
+
+
+
 function getUsersDir(): string {
   const config = getContentConfig();
   return join(config.contentDir, 'users');
 }
 
-/**
- * Get the content directory for a specific user and content type
- */
+
+
+
 function getUserContentDir(handle: string, contentType: string): string {
   return join(getUsersDir(), handle, contentType);
 }
 
-/**
- * Get all registered user handles (users with directories)
- */
+
+
+
 function getAllUserHandles(): string[] {
   const usersDir = getUsersDir();
   if (!existsSync(usersDir)) {
@@ -54,13 +54,13 @@ function getAllUserHandles(): string[] {
     .map((d) => d.name);
 }
 
-// ============================================================================
-// Visibility Helpers
-// ============================================================================
 
-/**
- * Check if content should be included based on visibility
- */
+
+
+
+
+
+
 function shouldIncludeByVisibility(
   visibility: string,
   options: LoadContentOptions
@@ -80,9 +80,9 @@ function shouldIncludeByVisibility(
   return false;
 }
 
-/**
- * Check if content should be included based on fediverse visibility
- */
+
+
+
 function shouldIncludeByFediverseVisibility(
   metadata: Record<string, unknown>,
   options: LoadContentOptions
@@ -107,9 +107,9 @@ function shouldIncludeByFediverseVisibility(
   return true;
 }
 
-/**
- * Normalize profile visibility from various formats
- */
+
+
+
 function normalizeProfileVisibility(
   visibility: string | undefined,
   published: boolean | undefined
@@ -123,9 +123,9 @@ function normalizeProfileVisibility(
   return 'public';
 }
 
-/**
- * Extract date from slug or ID for pagination
- */
+
+
+
 function extractDateFromSlug(slug: string): number {
   const parsed = Date.parse(slug);
   if (!isNaN(parsed)) {
@@ -140,13 +140,13 @@ function extractDateFromSlug(slug: string): number {
   return Date.now();
 }
 
-// ============================================================================
-// Generic Content Loader
-// ============================================================================
 
-/**
- * Load content items of a specific type from user directories
- */
+
+
+
+
+
+
 function loadContentType(
   contentType: string,
   dirName: string,
@@ -215,13 +215,13 @@ function loadContentType(
   return items;
 }
 
-// ============================================================================
-// Content Loading Functions
-// ============================================================================
 
-/**
- * Load all content for a user (blog posts, notes, products, events, programs, videos, profiles)
- */
+
+
+
+
+
+
 export async function loadUserContent(
   handle: string,
   options: LoadContentOptions = {}
@@ -250,12 +250,12 @@ export async function loadUserContent(
     const profiles = await loadProfiles({ ...options, handle });
     allContent.push(...profiles);
 
-    // Sort by publishedAt (newest first)
+    
     allContent.sort(
       (a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime()
     );
 
-    // Apply pagination
+    
     let filtered = allContent;
 
     if (options.minId) {
@@ -279,65 +279,65 @@ export async function loadUserContent(
   });
 }
 
-/**
- * Load blog posts from user directories
- */
+
+
+
 export async function loadBlogPosts(
   options: LoadContentOptions = {}
 ): Promise<ContentItem[]> {
   return loadContentType('blog-post', 'blog', options, 'publishedAt', 'date');
 }
 
-/**
- * Load notes from user directories
- */
+
+
+
 export async function loadNotes(
   options: LoadContentOptions = {}
 ): Promise<ContentItem[]> {
   return loadContentType('note', 'notes', options);
 }
 
-/**
- * Load products from user directories
- */
+
+
+
 export async function loadProducts(
   options: LoadContentOptions = {}
 ): Promise<ContentItem[]> {
   return loadContentType('product', 'products', options);
 }
 
-/**
- * Load events from user directories
- */
+
+
+
 export async function loadEvents(
   options: LoadContentOptions = {}
 ): Promise<ContentItem[]> {
   return loadContentType('event', 'events', options, 'publishedAt', 'date', true);
 }
 
-/**
- * Load programs (recurring events/activities) from user directories
- */
+
+
+
 export async function loadPrograms(
   options: LoadContentOptions = {}
 ): Promise<ContentItem[]> {
   return loadContentType('program', 'programs', options, 'publishedAt', 'startDate', true);
 }
 
-/**
- * Load videos from user directories
- */
+
+
+
 export async function loadVideos(
   options: LoadContentOptions = {}
 ): Promise<ContentItem[]> {
   return loadContentType('video', 'videos', options, 'publishedAt', 'date', true);
 }
 
-/**
- * Load profiles from user directories
- *
- * All profiles are loaded from: {contentDir}/users/{handle}/profile.md
- */
+
+
+
+
+
 export async function loadProfiles(
   options: LoadContentOptions = {}
 ): Promise<ContentItem[]> {
@@ -408,13 +408,13 @@ export async function loadProfiles(
   return items;
 }
 
-// ============================================================================
-// Single Content Loading
-// ============================================================================
 
-/**
- * Find content file path by searching through user directories
- */
+
+
+
+
+
+
 function findContentPath(
   contentType: string,
   slug: string
@@ -444,9 +444,9 @@ function findContentPath(
   return null;
 }
 
-/**
- * Load a single blog post by slug (searches all user directories)
- */
+
+
+
 export async function loadPostBySlug(slug: string): Promise<ContentItem | null> {
   const found = findContentPath('blog', slug);
 
@@ -476,9 +476,9 @@ export async function loadPostBySlug(slug: string): Promise<ContentItem | null> 
   }
 }
 
-/**
- * Load a single event by slug (searches all user directories)
- */
+
+
+
 export async function loadEventBySlug(slug: string): Promise<ContentItem | null> {
   const found = findContentPath('events', slug);
 
@@ -513,13 +513,13 @@ export async function loadEventBySlug(slug: string): Promise<ContentItem | null>
   }
 }
 
-// ============================================================================
-// Content Modification (Update/Delete)
-// ============================================================================
 
-/**
- * Update a blog post (searches all user directories)
- */
+
+
+
+
+
+
 export async function updatePost(
   slug: string,
   data: Partial<Record<string, unknown>>,
@@ -547,9 +547,9 @@ export async function updatePost(
   writeFileSync(found.filePath, updatedFile, 'utf-8');
 }
 
-/**
- * Update an event (searches all user directories)
- */
+
+
+
 export async function updateEvent(
   slug: string,
   data: Partial<Record<string, unknown>>,
@@ -577,9 +577,9 @@ export async function updateEvent(
   writeFileSync(found.filePath, updatedFile, 'utf-8');
 }
 
-/**
- * Delete a blog post (searches all user directories)
- */
+
+
+
 export async function deletePost(slug: string): Promise<void> {
   const found = findContentPath('blog', slug);
 
@@ -590,9 +590,9 @@ export async function deletePost(slug: string): Promise<void> {
   unlinkSync(found.filePath);
 }
 
-/**
- * Delete an event (searches all user directories)
- */
+
+
+
 export async function deleteEvent(slug: string): Promise<void> {
   const found = findContentPath('events', slug);
 
@@ -603,20 +603,20 @@ export async function deleteEvent(slug: string): Promise<void> {
   unlinkSync(found.filePath);
 }
 
-// ============================================================================
-// Helper Extractors
-// ============================================================================
 
-/**
- * Extract author handle from metadata.
- * Supports both object format (AuthorReference) and legacy string format.
- *
- * @param metadata - Content frontmatter metadata
- * @returns The author handle string
- *
- * @deprecated String format for author field is deprecated.
- * Use AuthorReference object format with name, handle, and optional avatar.
- */
+
+
+
+
+
+
+
+
+
+
+
+
+
 export function extractAuthorHandle(metadata: Record<string, unknown>): string {
   if (typeof metadata.author === 'object' && (metadata.author as Record<string, unknown>)?.handle) {
     return (metadata.author as Record<string, unknown>).handle as string;
@@ -629,17 +629,17 @@ export function extractAuthorHandle(metadata: Record<string, unknown>): string {
   return (metadata.handle as string) || 'unknown';
 }
 
-/**
- * Extract organizer handle from event metadata.
- * Supports both object format (AuthorReference) and legacy string format.
- * Falls back to author field if organizer is not set.
- *
- * @param metadata - Event frontmatter metadata
- * @returns The organizer/author handle string
- *
- * @deprecated String format for organizer field is deprecated.
- * Use AuthorReference object format with name, handle, and optional avatar.
- */
+
+
+
+
+
+
+
+
+
+
+
 export function extractOrganizerHandle(metadata: Record<string, unknown>): string {
   if (typeof metadata.author === 'object' && (metadata.author as Record<string, unknown>)?.handle) {
     return (metadata.author as Record<string, unknown>).handle as string;
@@ -660,20 +660,20 @@ export function extractOrganizerHandle(metadata: Record<string, unknown>): strin
   return (metadata.handle as string) || 'unknown';
 }
 
-// ============================================================================
-// Factory
-// ============================================================================
 
-/**
- * Create a content loader instance with the current config.
- * This is the preferred way to use the content loader in application code.
- *
- * @example
- * ```typescript
- * const loader = createContentLoader();
- * const posts = await loader.loadBlogPosts({ handle: 'jsullivan' });
- * ```
- */
+
+
+
+
+
+
+
+
+
+
+
+
+
 export function createContentLoader() {
   return {
     loadUserContent,

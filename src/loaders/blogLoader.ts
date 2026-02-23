@@ -1,40 +1,40 @@
-/**
- * Blog Post Loader Service
- *
- * Centralizes loading of markdown blog posts with frontmatter.
- * Provides a consistent interface for loading, filtering, and pagination of blog posts.
- *
- * All blog posts are loaded from per-user directories:
- * {contentDir}/users/{handle}/blog/
- *
- * @module loaders/blogLoader
- */
+
+
+
+
+
+
+
+
+
+
+
 
 import { loadUserContent, loadSingleUserContent, findContentBySlug } from './userContentLoader.js';
 import type { LoadedBlogPost, BlogListOptions } from '../types.js';
 
-// ============================================================================
-// Main Loading Functions
-// ============================================================================
 
-/**
- * Load all blog posts with optional filtering
- *
- * Uses per-user directory loading:
- * Primary: Per-user directories ({contentDir}/users/{handle}/blog/)
- *
- * @param options - Filtering and pagination options
- * @returns Array of loaded blog posts
- *
- * @example
- * ```typescript
- * const posts = await loadBlogPosts({
- *   handle: 'jsullivan',
- *   visibility: ['public'],
- *   publishedOnly: true
- * });
- * ```
- */
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 export async function loadBlogPosts(
   options: BlogListOptions = {}
 ): Promise<LoadedBlogPost[]> {
@@ -60,7 +60,7 @@ export async function loadBlogPosts(
     });
   }
 
-  // Sort by date (newest first)
+  
   posts.sort((a, b) => {
     const dateA = new Date(
       (a.frontmatter.publishedAt as string) || (a.frontmatter.date as string) || 0
@@ -71,16 +71,16 @@ export async function loadBlogPosts(
     return dateB.getTime() - dateA.getTime();
   });
 
-  // Apply pagination
+  
   const start = options.offset || 0;
   const end = options.limit ? start + options.limit : undefined;
 
   return posts.slice(start, end);
 }
 
-/**
- * Synchronous version of loadBlogPosts for use in server-only contexts
- */
+
+
+
 export function loadBlogPostsSync(
   options: BlogListOptions = {}
 ): LoadedBlogPost[] {
@@ -122,13 +122,13 @@ export function loadBlogPostsSync(
   return posts.slice(start, end);
 }
 
-/**
- * Load a single blog post by slug
- *
- * @param slug - The post slug (without file extension)
- * @param handle - Optional user handle to check user directory first
- * @returns The loaded blog post, or null if not found
- */
+
+
+
+
+
+
+
 export async function loadBlogPost(
   slug: string,
   handle?: string
@@ -152,9 +152,9 @@ export async function loadBlogPost(
   };
 }
 
-/**
- * Synchronous version of loadBlogPost
- */
+
+
+
 export function loadBlogPostSync(
   slug: string,
   handle?: string
@@ -178,9 +178,9 @@ export function loadBlogPostSync(
   };
 }
 
-/**
- * Load posts in a series, sorted by series order
- */
+
+
+
 export async function loadSeries(
   seriesName: string
 ): Promise<LoadedBlogPost[]> {
@@ -192,9 +192,9 @@ export async function loadSeries(
   );
 }
 
-/**
- * Get all unique tags across posts
- */
+
+
+
 export async function getAllTags(
   options: Pick<BlogListOptions, 'publishedOnly' | 'handle'> = {}
 ): Promise<string[]> {
@@ -210,9 +210,9 @@ export async function getAllTags(
   return Array.from(tags).sort();
 }
 
-/**
- * Get all unique categories across posts
- */
+
+
+
 export async function getAllCategories(
   options: Pick<BlogListOptions, 'publishedOnly' | 'handle'> = {}
 ): Promise<string[]> {
@@ -228,9 +228,9 @@ export async function getAllCategories(
   return Array.from(categories).sort();
 }
 
-/**
- * Get all unique series names
- */
+
+
+
 export async function getAllSeries(
   options: Pick<BlogListOptions, 'publishedOnly' | 'handle'> = {}
 ): Promise<string[]> {
@@ -246,9 +246,9 @@ export async function getAllSeries(
   return Array.from(series).sort();
 }
 
-/**
- * Get related posts based on tags and categories
- */
+
+
+
 export async function getRelatedPosts(
   slug: string,
   limit: number = 5
@@ -297,13 +297,13 @@ export async function getRelatedPosts(
   return scored;
 }
 
-// ============================================================================
-// Helper Functions
-// ============================================================================
 
-/**
- * Check if a post matches the given filters
- */
+
+
+
+
+
+
 function matchesFilters(
   frontmatter: Record<string, unknown>,
   slug: string,
@@ -351,25 +351,25 @@ function matchesFilters(
   return true;
 }
 
-/**
- * Calculate reading time based on word count (200 words/minute)
- */
+
+
+
 export function calculateReadingTime(content: string): number {
   const wordsPerMinute = 200;
   const wordCount = content.split(/\s+/).length;
   return Math.ceil(wordCount / wordsPerMinute);
 }
 
-/**
- * Calculate word count from markdown content
- */
+
+
+
 export function calculateWordCount(content: string): number {
   return content.split(/\s+/).length;
 }
 
-/**
- * Extract excerpt from content if not provided in frontmatter
- */
+
+
+
 export function extractExcerpt(
   content: string,
   maxLength: number = 200

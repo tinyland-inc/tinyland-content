@@ -1,21 +1,21 @@
-/**
- * Dual-Source Content Loader Utility
- *
- * Provides unified content loading from both per-user directories and legacy flat directories.
- * This enables gradual migration to the per-user directory structure while maintaining
- * backwards compatibility with existing content.
- *
- * Directory Structure:
- * - Per-user (primary): {contentDir}/users/{handle}/{contentType}/
- * - Legacy (fallback): {contentDir}/{contentType}/
- *
- * Resolution Order:
- * 1. If handle is specified, check user directory first
- * 2. Fall back to legacy flat directory (filter by author metadata)
- * 3. Merge and deduplicate results
- *
- * @module loaders/dualSourceLoader
- */
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 import { join } from 'path';
 import { existsSync, readdirSync, readFileSync } from 'fs';
@@ -23,9 +23,9 @@ import matter from 'gray-matter';
 import { getContentConfig } from '../config.js';
 import type { LoadedContent, DualSourceOptions } from '../types.js';
 
-// ============================================================================
-// Content Type
-// ============================================================================
+
+
+
 
 export type ContentType =
   | 'blog'
@@ -37,9 +37,9 @@ export type ContentType =
   | 'gallery'
   | 'stacks';
 
-/**
- * Mapping from content type to directory name in legacy structure
- */
+
+
+
 const LEGACY_DIR_MAP: Record<ContentType, string> = {
   blog: 'blog',
   products: 'products',
@@ -51,9 +51,9 @@ const LEGACY_DIR_MAP: Record<ContentType, string> = {
   stacks: 'stacks',
 };
 
-// ============================================================================
-// Directory Helpers
-// ============================================================================
+
+
+
 
 function getContentBase(): string {
   return getContentConfig().contentDir;
@@ -63,9 +63,9 @@ function getUsersDir(): string {
   return join(getContentBase(), 'users');
 }
 
-/**
- * Get the user-specific content directory path
- */
+
+
+
 export function getUserContentDir(
   handle: string,
   contentType: ContentType
@@ -73,38 +73,38 @@ export function getUserContentDir(
   return join(getUsersDir(), handle, contentType);
 }
 
-/**
- * Get the legacy flat content directory path
- */
+
+
+
 export function getLegacyContentDir(contentType: ContentType): string {
   return join(getContentBase(), LEGACY_DIR_MAP[contentType]);
 }
 
-/**
- * Get the user's base directory
- */
+
+
+
 export function getUserBaseDir(handle: string): string {
   return join(getUsersDir(), handle);
 }
 
-/**
- * Check if a user directory exists
- */
+
+
+
 export function userDirectoryExists(handle: string): boolean {
   return existsSync(getUserBaseDir(handle));
 }
 
-// ============================================================================
-// Core Loading Functions
-// ============================================================================
 
-/**
- * Load content from both user directories and legacy flat directories
- *
- * @param contentType - Type of content to load
- * @param options - Loading options
- * @returns Array of loaded content items, deduplicated by slug
- */
+
+
+
+
+
+
+
+
+
+
 export function loadDualSource(
   contentType: ContentType,
   options: DualSourceOptions = {}
@@ -119,7 +119,7 @@ export function loadDualSource(
   const results: LoadedContent[] = [];
   const seenSlugs = new Set<string>();
 
-  // Source 1: Per-user directories (PRIMARY)
+  
   if (handle) {
     const userContent = loadFromUserDirectory(handle, contentType, extensions);
     for (const item of userContent) {
@@ -141,7 +141,7 @@ export function loadDualSource(
     }
   }
 
-  // Source 2: Legacy flat directory (FALLBACK)
+  
   const legacyContent = loadFromLegacyDirectory(
     contentType,
     extensions,
@@ -164,9 +164,9 @@ export function loadDualSource(
   return results;
 }
 
-/**
- * Load a single content item by slug, checking user directory first
- */
+
+
+
 export function loadSingleDualSource(
   contentType: ContentType,
   slug: string,
@@ -197,9 +197,9 @@ export function loadSingleDualSource(
   return null;
 }
 
-/**
- * Get all user handles that have content of a specific type
- */
+
+
+
 export function getUsersWithContent(contentType: ContentType): string[] {
   const handles: string[] = [];
   const usersDir = getUsersDir();
@@ -227,9 +227,9 @@ export function getUsersWithContent(contentType: ContentType): string[] {
   return handles;
 }
 
-/**
- * Check if a user has any content of a specific type
- */
+
+
+
 export function userHasContent(
   handle: string,
   contentType: ContentType
@@ -244,13 +244,13 @@ export function userHasContent(
   return files.length > 0;
 }
 
-// ============================================================================
-// Migration Helpers
-// ============================================================================
 
-/**
- * Get content items that need migration (exist in legacy but not in user dir)
- */
+
+
+
+
+
+
 export function getContentNeedingMigration(
   contentType: ContentType,
   handle: string
@@ -272,9 +272,9 @@ export function getContentNeedingMigration(
   );
 }
 
-/**
- * Get all user handles that have content in legacy directories
- */
+
+
+
 export function getLegacyContentOwners(contentType: ContentType): string[] {
   const legacyContent = loadFromLegacyDirectory(
     contentType,
@@ -285,9 +285,9 @@ export function getLegacyContentOwners(contentType: ContentType): string[] {
   return Array.from(handles).filter((h) => h !== 'unknown');
 }
 
-// ============================================================================
-// Internal Loading Functions
-// ============================================================================
+
+
+
 
 function loadFromUserDirectory(
   handle: string,
@@ -424,9 +424,9 @@ function loadSingleFile(
   }
 }
 
-/**
- * Default author handle extractor
- */
+
+
+
 function defaultExtractAuthorHandle(
   metadata: Record<string, unknown>
 ): string {
