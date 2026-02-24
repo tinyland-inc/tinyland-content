@@ -41,7 +41,7 @@
     "@tummycrypt/tinyland-content-types": "workspace:*",
     "gray-matter": "^4.0.3",
     "nanoid": "^5.0.0",
-    "diff": "^7.0.0"
+    "diff": "^8.0.3"
   },
   "devDependencies": {
     "@fast-check/vitest": "^0.2.4",
