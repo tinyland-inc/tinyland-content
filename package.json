@@ -40,11 +40,11 @@
     "prepublishOnly": "pnpm build && pnpm check:package"
   },
   "dependencies": {
-    "@tummycrypt/tinyland-content-types": "workspace:^",
-    "@tummycrypt/tinyland-event-loader": "workspace:*",
-    "@tummycrypt/tinyland-product-loader": "workspace:*",
-    "@tummycrypt/tinyland-profile-loader": "workspace:*",
-    "@tummycrypt/tinyland-user-resolution": "workspace:*",
+    "@tummycrypt/tinyland-content-types": "^0.2.2",
+    "@tummycrypt/tinyland-event-loader": "^0.2.2",
+    "@tummycrypt/tinyland-product-loader": "^0.2.2",
+    "@tummycrypt/tinyland-profile-loader": "^0.2.2",
+    "@tummycrypt/tinyland-user-resolution": "^0.2.2",
     "gray-matter": "^4.0.3",
     "nanoid": "^5.0.0",
     "diff": "^8.0.3"
