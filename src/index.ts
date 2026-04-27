@@ -143,3 +143,101 @@ export {
   ScheduledPublishingService,
   createScheduledPublisher,
 } from './scheduling/index.js';
+
+
+// Loader helpers stay on the facade so callers do not depend on internal package splits.
+export {
+  loadUserContent as loadUserContentFromLoader,
+  loadSingleUserContent,
+  findContentBySlug,
+  getUsersWithContent,
+  userHasContent,
+  getUserContentDir,
+  getUserBaseDir,
+  getUserProfilePath,
+  userDirectoryExists,
+  getAllUserHandles,
+  extractAuthorHandleFromMetadata,
+  getUserContentFilePath,
+  getUserContentFilePathByHandle,
+  findUserContentFilePath,
+} from './loaders/index.js';
+export type { UserContentType } from './loaders/index.js';
+
+export {
+  loadBlogPosts as loadBlogPostsFromLoader,
+  loadBlogPost,
+  loadSeries,
+  getAllTags,
+  getAllCategories,
+  getAllSeries,
+  getRelatedPosts,
+} from './loaders/index.js';
+
+export function contentItemToTypedContent<T extends Record<string, unknown>>(item: T): T {
+  return item;
+}
+
+// --- Event loader re-exports (from tinyland-event-loader) ---
+export type { EventContent, EventContentFrontmatter, EventLoaderConfig } from '@tummycrypt/tinyland-event-loader';
+export {
+  loadEventsServer,
+  getUpcomingEventsServer,
+  getPastEventsServer,
+  getEventBySlugServer,
+  getFeaturedEventsServer,
+  getRelatedEventsServer,
+  getEventsByOrganizerServer,
+  configure as configureEventLoader,
+  getConfig as getEventLoaderConfig,
+  resetConfig as resetEventLoaderConfig,
+} from '@tummycrypt/tinyland-event-loader';
+
+// --- Product loader re-exports (from tinyland-product-loader) ---
+export type { Product, ProductFrontmatter, ProductLoaderConfig } from '@tummycrypt/tinyland-product-loader';
+export {
+  loadProductsServer,
+  getPublishedProductsServer,
+  getFeaturedProductsServer,
+  getProductBySlugServer,
+  getProductsByCategoryServer,
+  getAllCategoriesServer,
+  getAllProductTagsServer,
+  searchProductsServer,
+  getRelatedProductsServer,
+  configure as configureProductLoader,
+  getConfig as getProductLoaderConfig,
+  resetConfig as resetProductLoaderConfig,
+} from '@tummycrypt/tinyland-product-loader';
+
+// --- Profile loader re-exports (from tinyland-profile-loader) ---
+export type { Profile, ProfileFrontmatter, ProfileLoaderConfig } from '@tummycrypt/tinyland-profile-loader';
+export {
+  loadProfilesServer,
+  getPublishedProfilesServer,
+  getFeaturedProfilesServer,
+  getProfileBySlugServer,
+  getProfilesByRoleServer,
+  getProfilesByTagServer,
+  getAllRolesServer,
+  getAllProfileTagsServer,
+  searchProfilesServer,
+  getRandomProfilesServer,
+  configure as configureProfileLoader,
+  getConfig as getProfileLoaderConfig,
+  resetConfig as resetProfileLoaderConfig,
+} from '@tummycrypt/tinyland-profile-loader';
+
+// --- User resolution re-exports (from tinyland-user-resolution) ---
+export type { AdminUser, ResolvedUser, UserResolutionConfig } from '@tummycrypt/tinyland-user-resolution';
+export {
+  resolveUser,
+  userExists,
+  getAllUserHandles as getAllUserHandlesFromResolution,
+  clearUserResolutionCache,
+  RESERVED_ROUTES,
+  isReservedRoute,
+  configure as configureUserResolution,
+  getConfig as getUserResolutionConfig,
+  resetConfig as resetUserResolutionConfig,
+} from '@tummycrypt/tinyland-user-resolution';
