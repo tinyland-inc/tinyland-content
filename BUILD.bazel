@@ -3,7 +3,6 @@ BUILD.bazel for @tummycrypt/tinyland-content.
 
 Dual-mode build: works with both pnpm (standalone) and Bazel (CI/production).
   Standalone: cd packages/tinyland-content && pnpm build
-  Monorepo:   bazel build //packages/tinyland-content/...
 """
 
 load("@aspect_rules_js//npm:defs.bzl", "npm_package")
@@ -38,7 +37,6 @@ ts_project(
         ":node_modules/diff",
         ":node_modules/@types/diff",
         ":node_modules/@types/node",
-        "//packages/tinyland-content-types:tinyland_content_types",
     ],
     visibility = ["//visibility:public"],
 )
