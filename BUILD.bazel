@@ -48,7 +48,7 @@ npm_package(
         ":tinyland_content",
     ],
     package = "@tummycrypt/tinyland-content",
-    version = "0.2.2",
+    version = "0.2.3",
     visibility = ["//visibility:public"],
 )
 
