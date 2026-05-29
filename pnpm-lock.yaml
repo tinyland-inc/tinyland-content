@@ -8,21 +8,6 @@ importers:
 
   .:
     dependencies:
-      '@tummycrypt/tinyland-content-types':
-        specifier: ^0.2.2
-        version: 0.2.2
-      '@tummycrypt/tinyland-event-loader':
-        specifier: ^0.2.2
-        version: 0.2.2
-      '@tummycrypt/tinyland-product-loader':
-        specifier: ^0.2.2
-        version: 0.2.2
-      '@tummycrypt/tinyland-profile-loader':
-        specifier: ^0.2.2
-        version: 0.2.2
-      '@tummycrypt/tinyland-user-resolution':
-        specifier: ^0.2.2
-        version: 0.2.2
       date-fns-tz:
         specifier: '>=3.0.0'
         version: 3.2.0(date-fns@4.1.0)
@@ -187,26 +172,6 @@ packages:
 
   '@standard-schema/spec@1.1.0':
     resolution: {integrity: sha512-l2aFy5jALhniG5HgqrD6jXLi/rUWrKvqN/qJx6yoJsgKhblVd+iqqU4RCXavm/jPityDo5TCvKMnpjKnOriy0w==}
-
-  '@tummycrypt/tinyland-content-types@0.2.2':
-    resolution: {integrity: sha512-tqpwLNCPpPZI+XcdEGDktt9D5MFW0u8O4Wd9qBZQjABoK+u0bMufI9tCLaQ8eeNoQmFnf44z7gXFJkTakiouaQ==}
-    engines: {node: '>=22.0.0'}
-
-  '@tummycrypt/tinyland-event-loader@0.2.2':
-    resolution: {integrity: sha512-GgJ4Co/yFW+xT6DeRoyl7lsD3uMuGArBeT8/ZJV5U6Q3Y7DWxhsXaSEcewubM/pANEqweUNdlcEmJWp7iOBEMw==}
-    engines: {node: '>=22.0.0'}
-
-  '@tummycrypt/tinyland-product-loader@0.2.2':
-    resolution: {integrity: sha512-+8f99y5VVyfR3RHrFMUFmsp/xEmtByAwF8PemAhjOHNxzcegKfLVOiJIHkVsmZN6+rRd8+Nw382wfkF5B1vNfQ==}
-    engines: {node: '>=22.0.0'}
-
-  '@tummycrypt/tinyland-profile-loader@0.2.2':
-    resolution: {integrity: sha512-pLlbAZefKVVrc3xASgzHjA+J4F2ijM+Vz7SqW0g9+8Pi/CCpGB0fv15c2CsFT8nVWk2OGW3qFyc5mWTXlzvnMQ==}
-    engines: {node: '>=22.0.0'}
-
-  '@tummycrypt/tinyland-user-resolution@0.2.2':
-    resolution: {integrity: sha512-4jnWO+Ql4Avf6hcgSnPiqsf2XKVT3Q7FzO7m4uQHOj1wMAWz+fjc5ULMQUzW5ExeThxAt142Dx/HdYwZskhnmA==}
-    engines: {node: '>=22.0.0'}
 
   '@tybys/wasm-util@0.10.1':
     resolution: {integrity: sha512-9tTaPJLSiejZKx+Bmog4uSubteqTvFrVrURwkmHixBo0G4seD0zUxp98E1DzUBJxLQ3NPwXrGKDiVjwx/DpPsg==}
@@ -693,20 +658,6 @@ snapshots:
   '@rolldown/pluginutils@1.0.0-rc.17': {}
 
   '@standard-schema/spec@1.1.0': {}
-
-  '@tummycrypt/tinyland-content-types@0.2.2': {}
-
-  '@tummycrypt/tinyland-event-loader@0.2.2':
-    dependencies:
-      gray-matter: 4.0.3
-
-  '@tummycrypt/tinyland-product-loader@0.2.2': {}
-
-  '@tummycrypt/tinyland-profile-loader@0.2.2':
-    dependencies:
-      gray-matter: 4.0.3
-
-  '@tummycrypt/tinyland-user-resolution@0.2.2': {}
 
   '@tybys/wasm-util@0.10.1':
     dependencies:

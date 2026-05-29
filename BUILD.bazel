@@ -5,12 +5,33 @@ Dual-mode build: works with both pnpm (standalone) and Bazel (CI/production).
   Standalone: cd packages/tinyland-content && pnpm build
 """
 
-load("@aspect_rules_js//npm:defs.bzl", "npm_package")
+load("@aspect_rules_js//npm:defs.bzl", "npm_link_package", "npm_package")
 load("@aspect_rules_ts//ts:defs.bzl", "ts_project")
 load("@tummycrypt_tinyland_content_npm//:defs.bzl", "npm_link_all_packages")
 load("@tummycrypt_tinyland_content_npm//:vitest/package_json.bzl", vitest_bin = "bin")
 
 npm_link_all_packages(name = "node_modules")
+
+# First-party deps resolved via the Bazel module graph (TIN-1716).
+npm_link_package(
+    name = "node_modules/@tummycrypt/tinyland-event-loader",
+    src = "@tummycrypt_tinyland_event_loader//:pkg",
+)
+
+npm_link_package(
+    name = "node_modules/@tummycrypt/tinyland-product-loader",
+    src = "@tummycrypt_tinyland_product_loader//:pkg",
+)
+
+npm_link_package(
+    name = "node_modules/@tummycrypt/tinyland-profile-loader",
+    src = "@tummycrypt_tinyland_profile_loader//:pkg",
+)
+
+npm_link_package(
+    name = "node_modules/@tummycrypt/tinyland-user-resolution",
+    src = "@tummycrypt_tinyland_user_resolution//:pkg",
+)
 
 
 ts_project(
@@ -37,6 +58,10 @@ ts_project(
         ":node_modules/diff",
         ":node_modules/@types/diff",
         ":node_modules/@types/node",
+        ":node_modules/@tummycrypt/tinyland-event-loader",
+        ":node_modules/@tummycrypt/tinyland-product-loader",
+        ":node_modules/@tummycrypt/tinyland-profile-loader",
+        ":node_modules/@tummycrypt/tinyland-user-resolution",
     ],
     visibility = ["//visibility:public"],
 )
@@ -59,6 +84,10 @@ vitest_bin.vitest_test(
         "tsconfig.json",
         ":node_modules/vitest",
         "vitest.config.ts",
+        ":node_modules/@tummycrypt/tinyland-event-loader",
+        ":node_modules/@tummycrypt/tinyland-product-loader",
+        ":node_modules/@tummycrypt/tinyland-profile-loader",
+        ":node_modules/@tummycrypt/tinyland-user-resolution",
     ] + glob(["src/**/*.ts"]) + glob(["tests/**/*.test.ts", "tests/**/*.ts"]),
     args = [
         "run",
