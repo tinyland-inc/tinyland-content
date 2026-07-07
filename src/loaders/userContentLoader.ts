@@ -27,7 +27,9 @@ export type ContentType =
   | 'notes'
   | 'videos'
   | 'gallery'
-  | 'stacks';
+  | 'stacks'
+  | 'contacts'
+  | 'docs';
 
 
 
@@ -39,6 +41,18 @@ function getContentBase(): string {
 
 function getUsersDir(): string {
   return join(getContentBase(), 'users');
+}
+
+
+
+
+function getBundledBase(): string | undefined {
+  return getContentConfig().bundledContentDir;
+}
+
+function getBundledUsersDir(): string | undefined {
+  const base = getBundledBase();
+  return base ? join(base, 'users') : undefined;
 }
 
 
@@ -352,18 +366,18 @@ export function findUserContentFilePath(
 
 
 
-function loadFromUserDirectory(
-  handle: string,
-  contentType: ContentType,
-  extensions: string[]
-): LoadedContent[] {
-  const dir = getUserContentDir(handle, contentType);
 
+
+function loadFilesFromDir(
+  dir: string,
+  handle: string,
+  extensions: string[],
+  byFileName: Map<string, LoadedContent>
+): void {
   if (!existsSync(dir)) {
-    return [];
+    return;
   }
 
-  const results: LoadedContent[] = [];
   const files = readdirSync(dir).filter((f) =>
     extensions.some((ext) => f.endsWith(ext))
   );
@@ -375,7 +389,7 @@ function loadFromUserDirectory(
       const { data: metadata, content } = matter(fileContent);
       const slug = file.replace(/\.(md|mdx)$/, '');
 
-      results.push({
+      byFileName.set(file, {
         slug,
         metadata,
         content,
@@ -389,26 +403,51 @@ function loadFromUserDirectory(
       );
     }
   }
+}
 
-  return results;
+function loadFromUserDirectory(
+  handle: string,
+  contentType: ContentType,
+  extensions: string[]
+): LoadedContent[] {
+  const liveDir = getUserContentDir(handle, contentType);
+  const bundledUsersDir = getBundledUsersDir();
+  const bundledDir = bundledUsersDir
+    ? join(bundledUsersDir, handle, contentType)
+    : undefined;
+
+
+  const byFileName = new Map<string, LoadedContent>();
+  if (bundledDir) {
+    loadFilesFromDir(bundledDir, handle, extensions, byFileName);
+  }
+  loadFilesFromDir(liveDir, handle, extensions, byFileName);
+
+  return Array.from(byFileName.values());
 }
 
 function loadFromAllUserDirectories(
   contentType: ContentType,
   extensions: string[]
 ): LoadedContent[] {
-  const usersDir = getUsersDir();
+  const liveUsersDir = getUsersDir();
+  const bundledUsersDir = getBundledUsersDir();
 
-  if (!existsSync(usersDir)) {
-    return [];
+
+  const handles = new Set<string>();
+  for (const dir of [bundledUsersDir, liveUsersDir]) {
+    if (!dir || !existsSync(dir)) {
+      continue;
+    }
+    for (const entry of readdirSync(dir, { withFileTypes: true })) {
+      if (entry.isDirectory()) {
+        handles.add(entry.name);
+      }
+    }
   }
 
   const results: LoadedContent[] = [];
-  const userDirs = readdirSync(usersDir, { withFileTypes: true })
-    .filter((d) => d.isDirectory())
-    .map((d) => d.name);
-
-  for (const handle of userDirs) {
+  for (const handle of Array.from(handles)) {
     const userContent = loadFromUserDirectory(handle, contentType, extensions);
     results.push(...userContent);
   }
