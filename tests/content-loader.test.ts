@@ -212,6 +212,251 @@ describe('ContentLoaderService', () => {
     });
   });
 
+  // TIN-1952: apex /blog, /@handle/blog and /feed read through the package
+  // loader's loadUserContent. On the empty sveltekit-content PVC the live dir
+  // is empty; bundledContentDir must back the read so apex is not content-blind,
+  // while live (contentDir) wins per handle/slug when both are present.
+  describe('loadUserContent bundled-content fallback', () => {
+    function post(title: string, body: string): string {
+      return [
+        '---',
+        `title: ${title}`,
+        'publishedAt: "2025-01-01"',
+        'visibility: public',
+        '---',
+        body,
+      ].join('\n');
+    }
+
+    it('returns bundled posts when the live content dir is empty (PVC scenario)', async () => {
+      configureContent({
+        contentDir: '/test/content',
+        bundledContentDir: '/test/bundled',
+        dataDir: '/test/data',
+      });
+
+      setupMockFs(
+        {
+          '/test/bundled/users/jess/blog/hello.md': post('Hello', 'bundled body'),
+          '/test/bundled/users/jess/blog/world.md': post('World', 'bundled body 2'),
+        },
+        {
+          // live users dir does not exist at all (empty PVC)
+          '/test/bundled/users': ['jess'],
+          '/test/bundled/users/jess/blog': ['hello.md', 'world.md'],
+        }
+      );
+
+      const { loadUserContent } = await import('../src/loaders/userContentLoader.js');
+      const posts = loadUserContent('blog', { aggregateAll: true });
+
+      expect(posts.length).toBeGreaterThan(0);
+      expect(posts).toHaveLength(2);
+      expect(posts.map((p) => p.slug).sort()).toEqual(['hello', 'world']);
+    });
+
+    it('lets live content win per handle/slug and unions live-only + bundled-only', async () => {
+      configureContent({
+        contentDir: '/test/content',
+        bundledContentDir: '/test/bundled',
+        dataDir: '/test/data',
+      });
+
+      setupMockFs(
+        {
+          // shared slug present in both: live must win
+          '/test/bundled/users/jess/blog/shared.md': post('Shared Bundled', 'old bundled'),
+          '/test/content/users/jess/blog/shared.md': post('Shared Live', 'new live'),
+          // bundled-only slug
+          '/test/bundled/users/jess/blog/bundled-only.md': post('Bundled Only', 'b'),
+          // live-only slug
+          '/test/content/users/jess/blog/live-only.md': post('Live Only', 'l'),
+        },
+        {
+          '/test/bundled/users': ['jess'],
+          '/test/bundled/users/jess/blog': ['shared.md', 'bundled-only.md'],
+          '/test/content/users': ['jess'],
+          '/test/content/users/jess/blog': ['shared.md', 'live-only.md'],
+        }
+      );
+
+      const { loadUserContent } = await import('../src/loaders/userContentLoader.js');
+      const posts = loadUserContent('blog', { aggregateAll: true });
+
+      const bySlug = new Map(posts.map((p) => [p.slug, p]));
+      expect(posts).toHaveLength(3);
+      expect([...bySlug.keys()].sort()).toEqual([
+        'bundled-only',
+        'live-only',
+        'shared',
+      ]);
+      // live wins for the shared slug
+      expect(bySlug.get('shared')!.metadata.title).toBe('Shared Live');
+      expect(bySlug.get('shared')!.content).toContain('new live');
+      expect(bySlug.get('shared')!.filePath).toBe(
+        '/test/content/users/jess/blog/shared.md'
+      );
+    });
+
+    it('per-handle loader (loadFromUserDirectory) overlays bundled-then-live', async () => {
+      configureContent({
+        contentDir: '/test/content',
+        bundledContentDir: '/test/bundled',
+        dataDir: '/test/data',
+      });
+
+      setupMockFs(
+        {
+          '/test/bundled/users/jess/blog/a.md': post('A bundled', 'b'),
+          '/test/content/users/jess/blog/a.md': post('A live', 'l'),
+          '/test/content/users/jess/blog/b.md': post('B live', 'l2'),
+        },
+        {
+          '/test/bundled/users/jess/blog': ['a.md'],
+          '/test/content/users/jess/blog': ['a.md', 'b.md'],
+        }
+      );
+
+      const { loadUserContent } = await import('../src/loaders/userContentLoader.js');
+      const posts = loadUserContent('blog', { handle: 'jess' });
+
+      const bySlug = new Map(posts.map((p) => [p.slug, p]));
+      expect(posts).toHaveLength(2);
+      expect(bySlug.get('a')!.metadata.title).toBe('A live');
+      expect(bySlug.get('b')!.metadata.title).toBe('B live');
+    });
+
+    it('no regression when bundledContentDir is not configured (live dir only)', async () => {
+      configureContent({
+        contentDir: '/test/content',
+        dataDir: '/test/data',
+      });
+
+      setupMockFs(
+        {
+          '/test/content/users/jess/blog/only.md': post('Only Live', 'live'),
+        },
+        {
+          '/test/content/users': ['jess'],
+          '/test/content/users/jess/blog': ['only.md'],
+        }
+      );
+
+      const { loadUserContent } = await import('../src/loaders/userContentLoader.js');
+      const posts = loadUserContent('blog', { aggregateAll: true });
+
+      expect(posts).toHaveLength(1);
+      expect(posts[0].slug).toBe('only');
+    });
+
+    it('does not throw when bundledContentDir is configured but missing on disk', async () => {
+      configureContent({
+        contentDir: '/test/content',
+        bundledContentDir: '/test/bundled-missing',
+        dataDir: '/test/data',
+      });
+
+      setupMockFs(
+        {
+          '/test/content/users/jess/blog/live.md': post('Live', 'live body'),
+        },
+        {
+          // only the live tree exists; bundled path absent from mockDirs/mockFiles
+          '/test/content/users': ['jess'],
+          '/test/content/users/jess/blog': ['live.md'],
+        }
+      );
+
+      const { loadUserContent } = await import('../src/loaders/userContentLoader.js');
+      let posts: ReturnType<typeof loadUserContent> = [];
+      expect(() => {
+        posts = loadUserContent('blog', { aggregateAll: true });
+      }).not.toThrow();
+      expect(posts).toHaveLength(1);
+      expect(posts[0].slug).toBe('live');
+    });
+  });
+
+  // TIN-1931: the ContentType union gained 'contacts' and 'docs' (#625) so the
+  // @[handle]/contact and @[handle]/docs surfaces resolve through the shared
+  // package loader. CONTENT_TYPE_DIR_MAP itself was not extended -- these types
+  // resolve via its `|| (contentType as ContentType)` identity fallback, so the
+  // on-disk directory is content/users/<handle>/{contacts,docs}.
+  describe('contacts/docs content types (TIN-1931)', () => {
+    it('accepts contacts/docs as ContentType values and maps to their own dir', async () => {
+      const { getUserContentDir } =
+        await import('../src/loaders/userContentLoader.js');
+
+      const contactsType: import('../src/loaders/userContentLoader.js').ContentType =
+        'contacts';
+      const docsType: import('../src/loaders/userContentLoader.js').ContentType =
+        'docs';
+
+      expect(getUserContentDir('jess', contactsType)).toBe(
+        '/test/content/users/jess/contacts'
+      );
+      expect(getUserContentDir('jess', docsType)).toBe(
+        '/test/content/users/jess/docs'
+      );
+    });
+
+    it('resolves contacts/docs file paths through the DIR_MAP fallback', async () => {
+      const { getUserContentFilePathByHandle, findUserContentFilePath } =
+        await import('../src/loaders/userContentLoader.js');
+
+      expect(
+        getUserContentFilePathByHandle('jess', 'contacts', 'card')
+      ).toBe('/test/content/users/jess/contacts/card.md');
+      expect(getUserContentFilePathByHandle('jess', 'docs', 'readme')).toBe(
+        '/test/content/users/jess/docs/readme.md'
+      );
+
+      setupMockFs(
+        {
+          '/test/content/users/jess/docs/guide.md': [
+            '---',
+            'title: Guide',
+            '---',
+            'body',
+          ].join('\n'),
+        },
+        {
+          '/test/content/users/jess/docs': ['guide.md'],
+        }
+      );
+      expect(findUserContentFilePath('jess', 'docs', 'guide')).toBe(
+        '/test/content/users/jess/docs/guide.md'
+      );
+    });
+  });
+
+  // TIN-1952: ContentServiceConfig gained an optional bundledContentDir (#605);
+  // configureContent must round-trip it through getContentConfig.
+  describe('bundledContentDir config (TIN-1952)', () => {
+    it('round-trips bundledContentDir through configureContent/getContentConfig', async () => {
+      const { getContentConfig } = await import('../src/config.js');
+
+      configureContent({
+        contentDir: '/test/content',
+        bundledContentDir: '/test/bundled',
+        dataDir: '/test/data',
+      });
+
+      expect(getContentConfig().bundledContentDir).toBe('/test/bundled');
+    });
+
+    it('leaves bundledContentDir undefined when not configured', async () => {
+      const { getContentConfig } = await import('../src/config.js');
+
+      configureContent({
+        contentDir: '/test/content',
+        dataDir: '/test/data',
+      });
+
+      expect(getContentConfig().bundledContentDir).toBeUndefined();
+    });
+  });
+
   describe('migrateVisibility', () => {
     it('should migrate legacy values correctly', async () => {
       const { migrateVisibility } = await import('../src/types.js');

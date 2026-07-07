@@ -50,13 +50,23 @@ export interface Tracer {
 
 
 export interface ContentServiceConfig {
-  
+
   contentDir: string;
-  
+
+  /**
+   * Optional read-through baseline directory for user content, mirroring
+   * `contentDir`'s `users/<handle>/<type>` layout. When set, loaders overlay
+   * bundled-then-live so live (contentDir) authored files win per handle/slug.
+   * Used to back apex /blog, /@handle/blog and /feed surfaces when the live
+   * content directory is an empty PVC mount (TIN-1952). Undefined = today's
+   * behavior (live dir only).
+   */
+  bundledContentDir?: string;
+
   dataDir?: string;
-  
+
   logger?: Logger;
-  
+
   tracer?: Tracer;
 }
 
@@ -97,7 +107,10 @@ export function configureContent(config: ContentServiceConfig): void {
 export function getContentConfig(): ContentServiceConfig {
   if (!_config) {
     return {
-      contentDir: './src/content',
+      // TIN-1931: the real content root is ./content (content/users/<handle>/…),
+      // matching what hooks.server.ts configures at runtime. The legacy
+      // ./src/content tree no longer holds user content.
+      contentDir: './content',
       dataDir: './data',
     };
   }
