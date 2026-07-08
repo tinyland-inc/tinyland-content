@@ -458,18 +458,123 @@ describe('ContentLoaderService', () => {
   });
 
   describe('migrateVisibility', () => {
-    it('should migrate legacy values correctly', async () => {
+    it('should migrate known canonical and legacy values correctly', async () => {
       const { migrateVisibility } = await import('../src/types.js');
 
       expect(migrateVisibility('public')).toBe('public');
+      expect(migrateVisibility('PUBLIC')).toBe('public');
       expect(migrateVisibility('published')).toBe('public');
+      expect(migrateVisibility('unlisted')).toBe('unlisted');
       expect(migrateVisibility('members')).toBe('followers');
+      expect(migrateVisibility('followers')).toBe('followers');
       expect(migrateVisibility('admin')).toBe('private');
       expect(migrateVisibility('private')).toBe('private');
       expect(migrateVisibility('draft')).toBe('private');
       expect(migrateVisibility('direct')).toBe('direct');
       expect(migrateVisibility(undefined)).toBe('public');
-      expect(migrateVisibility('unknown-value')).toBe('public');
+    });
+
+    it('fails closed to private on unknown or typo values', async () => {
+      const { migrateVisibility } = await import('../src/types.js');
+      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+      try {
+        expect(migrateVisibility('unknown-value')).toBe('private');
+        expect(migrateVisibility('pubic')).toBe('private');
+        expect(migrateVisibility('everyone')).toBe('private');
+        expect(migrateVisibility('visible')).toBe('private');
+      } finally {
+        warnSpy.mockRestore();
+      }
+    });
+  });
+
+  describe('normalizeProfileVisibility via loadProfiles', () => {
+    const profileWith = (visibility?: string) =>
+      [
+        '---',
+        'title: Test User',
+        ...(visibility ? [`visibility: ${visibility}`] : []),
+        '---',
+        'Bio',
+      ].join('\n');
+
+    it('excludes profiles with unknown visibility from public listings (fail closed)', async () => {
+      const { loadProfiles } = await import('../src/services/ContentLoaderService.js');
+      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+      setupMockFs(
+        {
+          '/test/content/users/gooduser/profile.md': profileWith('public'),
+          '/test/content/users/typouser/profile.md': profileWith('pubic'),
+        },
+        {
+          '/test/content/users': ['gooduser', 'typouser'],
+        }
+      );
+
+      try {
+        const items = await loadProfiles();
+        expect(items.map((i) => i.authorHandle)).toEqual(['gooduser']);
+      } finally {
+        warnSpy.mockRestore();
+      }
+    });
+
+    it('normalizes unknown visibility to private, surfaced only with includePrivate', async () => {
+      const { loadProfiles } = await import('../src/services/ContentLoaderService.js');
+      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+      setupMockFs(
+        {
+          '/test/content/users/typouser/profile.md': profileWith('pubic'),
+        },
+        {
+          '/test/content/users': ['typouser'],
+        }
+      );
+
+      try {
+        const items = await loadProfiles({ includePrivate: true });
+        expect(items).toHaveLength(1);
+        expect(items[0].visibility).toBe('private');
+      } finally {
+        warnSpy.mockRestore();
+      }
+    });
+
+    it('keeps legacy values public through normalizeProfileVisibility', async () => {
+      const { loadProfiles } = await import('../src/services/ContentLoaderService.js');
+
+      setupMockFs(
+        {
+          '/test/content/users/legacyuser/profile.md': profileWith('published'),
+        },
+        {
+          '/test/content/users': ['legacyuser'],
+        }
+      );
+
+      const items = await loadProfiles();
+      expect(items).toHaveLength(1);
+      expect(items[0].visibility).toBe('public');
+    });
+
+    it('defaults missing visibility to public unless published is false', async () => {
+      const { loadProfiles } = await import('../src/services/ContentLoaderService.js');
+
+      setupMockFs(
+        {
+          '/test/content/users/defaultuser/profile.md': profileWith(),
+        },
+        {
+          '/test/content/users': ['defaultuser'],
+        }
+      );
+
+      const items = await loadProfiles();
+      expect(items).toHaveLength(1);
+      expect(items[0].visibility).toBe('public');
     });
   });
 });
