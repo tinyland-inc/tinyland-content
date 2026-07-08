@@ -577,4 +577,212 @@ describe('ContentLoaderService', () => {
       expect(items[0].visibility).toBe('public');
     });
   });
+
+  describe('single-item loaders fail closed (TIN-2656)', () => {
+    const postWith = (visibility?: string, extra: string[] = []) =>
+      [
+        '---',
+        'title: Test Post',
+        'publishedAt: "2025-01-01"',
+        ...(visibility ? [`visibility: ${visibility}`] : []),
+        ...extra,
+        '---',
+        'Body',
+      ].join('\n');
+
+    it('loadPostBySlug resolves a typo visibility to private (fail closed)', async () => {
+      const { loadPostBySlug } = await import('../src/services/ContentLoaderService.js');
+      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+      setupMockFs(
+        {
+          '/test/content/users/testuser/blog/typo-post.md': postWith('pubic'),
+        },
+        {
+          '/test/content/users': ['testuser'],
+          '/test/content/users/testuser/blog': ['typo-post.md'],
+        }
+      );
+
+      try {
+        const post = await loadPostBySlug('typo-post');
+        expect(post).not.toBeNull();
+        expect(post!.visibility).toBe('private');
+      } finally {
+        warnSpy.mockRestore();
+      }
+    });
+
+    it('loadPostBySlug keeps absent visibility public (absent is NOT unknown)', async () => {
+      const { loadPostBySlug } = await import('../src/services/ContentLoaderService.js');
+
+      setupMockFs(
+        {
+          '/test/content/users/testuser/blog/default-post.md': postWith(),
+        },
+        {
+          '/test/content/users': ['testuser'],
+          '/test/content/users/testuser/blog': ['default-post.md'],
+        }
+      );
+
+      const post = await loadPostBySlug('default-post');
+      expect(post).not.toBeNull();
+      expect(post!.visibility).toBe('public');
+    });
+
+    it('loadPostBySlug keeps legacy published visibility public', async () => {
+      const { loadPostBySlug } = await import('../src/services/ContentLoaderService.js');
+
+      setupMockFs(
+        {
+          '/test/content/users/testuser/blog/legacy-post.md': postWith('published'),
+        },
+        {
+          '/test/content/users': ['testuser'],
+          '/test/content/users/testuser/blog': ['legacy-post.md'],
+        }
+      );
+
+      const post = await loadPostBySlug('legacy-post');
+      expect(post).not.toBeNull();
+      expect(post!.visibility).toBe('public');
+    });
+
+    it('loadEventBySlug resolves typo visibility to private incl. fediverseVisibility', async () => {
+      const { loadEventBySlug } = await import('../src/services/ContentLoaderService.js');
+      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+      setupMockFs(
+        {
+          '/test/content/users/testuser/events/typo-event.md': postWith('privte'),
+        },
+        {
+          '/test/content/users': ['testuser'],
+          '/test/content/users/testuser/events': ['typo-event.md'],
+        }
+      );
+
+      try {
+        const event = await loadEventBySlug('typo-event');
+        expect(event).not.toBeNull();
+        expect(event!.visibility).toBe('private');
+        expect(event!.fediverseVisibility).toBe('private');
+      } finally {
+        warnSpy.mockRestore();
+      }
+    });
+
+    it('loadEventBySlug keeps absent visibility public with undefined fediverseVisibility', async () => {
+      const { loadEventBySlug } = await import('../src/services/ContentLoaderService.js');
+
+      setupMockFs(
+        {
+          '/test/content/users/testuser/events/default-event.md': postWith(),
+        },
+        {
+          '/test/content/users': ['testuser'],
+          '/test/content/users/testuser/events': ['default-event.md'],
+        }
+      );
+
+      const event = await loadEventBySlug('default-event');
+      expect(event).not.toBeNull();
+      expect(event!.visibility).toBe('public');
+      expect(event!.fediverseVisibility).toBeUndefined();
+    });
+  });
+
+  describe('listing loaders fail closed (TIN-2656)', () => {
+    const postWith = (visibility?: string, extra: string[] = []) =>
+      [
+        '---',
+        'title: Test Post',
+        'publishedAt: "2025-01-01"',
+        ...(visibility ? [`visibility: ${visibility}`] : []),
+        ...extra,
+        '---',
+        'Body',
+      ].join('\n');
+
+    it('excludes typo-visibility posts from public listings, surfaces as private with includePrivate', async () => {
+      const { loadBlogPosts } = await import('../src/services/ContentLoaderService.js');
+      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+      setupMockFs(
+        {
+          '/test/content/users/testuser/blog/good-post.md': postWith('public'),
+          '/test/content/users/testuser/blog/typo-post.md': postWith('pubic'),
+        },
+        {
+          '/test/content/users': ['testuser'],
+          '/test/content/users/testuser/blog': ['good-post.md', 'typo-post.md'],
+        }
+      );
+
+      try {
+        const publicOnly = await loadBlogPosts({ handle: 'testuser' });
+        expect(publicOnly.map((p) => p.slug)).toEqual(['good-post']);
+
+        const withPrivate = await loadBlogPosts({
+          handle: 'testuser',
+          includePrivate: true,
+        });
+        const typoPost = withPrivate.find((p) => p.slug === 'typo-post');
+        expect(typoPost).toBeDefined();
+        expect(typoPost!.visibility).toBe('private');
+      } finally {
+        warnSpy.mockRestore();
+      }
+    });
+
+    it('keeps legacy published visibility posts in public listings', async () => {
+      const { loadBlogPosts } = await import('../src/services/ContentLoaderService.js');
+
+      setupMockFs(
+        {
+          '/test/content/users/testuser/blog/legacy-post.md': postWith('published'),
+        },
+        {
+          '/test/content/users': ['testuser'],
+          '/test/content/users/testuser/blog': ['legacy-post.md'],
+        }
+      );
+
+      const posts = await loadBlogPosts({ handle: 'testuser' });
+      expect(posts).toHaveLength(1);
+      expect(posts[0].visibility).toBe('public');
+    });
+
+    it('federatedOnly excludes typo fediverse visibility (fail closed) but keeps absent public', async () => {
+      const { loadEvents } = await import('../src/services/ContentLoaderService.js');
+      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+      setupMockFs(
+        {
+          '/test/content/users/testuser/events/open-event.md': postWith(),
+          '/test/content/users/testuser/events/typo-event.md': postWith(
+            'public',
+            ['fediverseVisibility: privte']
+          ),
+        },
+        {
+          '/test/content/users': ['testuser'],
+          '/test/content/users/testuser/events': ['open-event.md', 'typo-event.md'],
+        }
+      );
+
+      try {
+        const federated = await loadEvents({
+          handle: 'testuser',
+          federatedOnly: true,
+        });
+        expect(federated.map((e) => e.slug)).toEqual(['open-event']);
+        expect(federated[0].visibility).toBe('public');
+        expect(federated[0].fediverseVisibility).toBe('public');
+      } finally {
+        warnSpy.mockRestore();
+      }
+    });
+  });
 });

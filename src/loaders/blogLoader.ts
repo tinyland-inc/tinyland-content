@@ -12,6 +12,7 @@
 
 import { loadUserContent, loadSingleUserContent, findContentBySlug } from './userContentLoader.js';
 import type { LoadedBlogPost, BlogListOptions } from '../types.js';
+import { migrateVisibility } from '../types.js';
 
 
 
@@ -313,8 +314,10 @@ function matchesFilters(
     return false;
   }
 
-  const postVisibility = (frontmatter.visibility as string) || 'public';
-  if (options.visibility && !options.visibility.includes(postVisibility as never)) {
+  // Fail closed: unknown/typo values resolve to 'private' (never widen
+  // exposure); absent visibility stays 'public'.
+  const postVisibility = migrateVisibility(frontmatter.visibility as string | undefined);
+  if (options.visibility && !options.visibility.includes(postVisibility)) {
     return false;
   }
 

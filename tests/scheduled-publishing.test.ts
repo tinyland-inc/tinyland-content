@@ -213,8 +213,84 @@ describe('ScheduledPublishingService', () => {
       const { createScheduledPublisher } = await import('../src/scheduling/index.js');
       const onPublish = vi.fn();
       const svc = createScheduledPublisher({ onPublish });
-      
+
       expect(svc).toBeDefined();
+    });
+  });
+
+  describe('publish hook visibility normalization (TIN-2656)', () => {
+    it('hands federation hooks private for typo visibility (fail closed)', async () => {
+      const service = await getService();
+      await service.initialize();
+
+      const seen: Array<{ visibility: string }> = [];
+      service.setHooks({
+        onPublish: async (item) => {
+          seen.push({ visibility: item.visibility });
+        },
+      });
+
+      await service.scheduleContent(
+        'blog',
+        'typo-post',
+        '2020-01-01T00:00:00Z',
+        'UTC',
+        true,
+        'testuser'
+      );
+
+      fsStore['/test/content/blog/typo-post.md'] = [
+        '---',
+        'title: Typo Post',
+        'visibility: pubic',
+        '---',
+        'Body',
+      ].join('\n');
+
+      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+      try {
+        const results = await service.processScheduledItems();
+        expect(results).toHaveLength(1);
+        expect(results[0].federated).toBe(true);
+        expect(seen).toHaveLength(1);
+        expect(seen[0].visibility).toBe('private');
+      } finally {
+        warnSpy.mockRestore();
+      }
+    });
+
+    it('keeps absent visibility public through publish hooks', async () => {
+      const service = await getService();
+      await service.initialize();
+
+      const seen: Array<{ visibility: string }> = [];
+      service.setHooks({
+        onPublish: async (item) => {
+          seen.push({ visibility: item.visibility });
+        },
+      });
+
+      await service.scheduleContent(
+        'blog',
+        'default-post',
+        '2020-01-01T00:00:00Z',
+        'UTC',
+        true,
+        'testuser'
+      );
+
+      fsStore['/test/content/blog/default-post.md'] = [
+        '---',
+        'title: Default Post',
+        '---',
+        'Body',
+      ].join('\n');
+
+      const results = await service.processScheduledItems();
+      expect(results).toHaveLength(1);
+      expect(results[0].federated).toBe(true);
+      expect(seen).toHaveLength(1);
+      expect(seen[0].visibility).toBe('public');
     });
   });
 
