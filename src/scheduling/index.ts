@@ -20,6 +20,7 @@ import type {
   ScheduleStorage,
   ContentItem,
 } from '../types.js';
+import { migrateVisibility } from '../types.js';
 
 
 export type { ScheduledItem, PublishResult, PublishHooks, ScheduleStorage };
@@ -371,9 +372,11 @@ export class ScheduledPublishingService {
             updatedAt: parsed.data.updatedAt as string,
             authorHandle:
               (parsed.data.author as string) || 'admin',
-            visibility:
-              (parsed.data.visibility as ContentItem['visibility']) ||
-              'public',
+            // Fail closed: unknown/typo values resolve to 'private' before the
+            // item is handed to federation hooks; absent stays 'public'.
+            visibility: migrateVisibility(
+              parsed.data.visibility as string | undefined
+            ),
           };
 
           await this.hooks.onPublish(contentItem);
