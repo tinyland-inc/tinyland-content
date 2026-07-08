@@ -14,6 +14,11 @@ npm_link_all_packages(name = "node_modules")
 
 # First-party deps resolved via the Bazel module graph (TIN-1716).
 npm_link_package(
+    name = "node_modules/@tummycrypt/tinyland-content-types",
+    src = "@tummycrypt_tinyland_content_types//:pkg",
+)
+
+npm_link_package(
     name = "node_modules/@tummycrypt/tinyland-event-loader",
     src = "@tummycrypt_tinyland_event_loader//:pkg",
 )
@@ -58,6 +63,7 @@ ts_project(
         ":node_modules/diff",
         ":node_modules/@types/diff",
         ":node_modules/@types/node",
+        ":node_modules/@tummycrypt/tinyland-content-types",
         ":node_modules/@tummycrypt/tinyland-event-loader",
         ":node_modules/@tummycrypt/tinyland-product-loader",
         ":node_modules/@tummycrypt/tinyland-profile-loader",
@@ -73,7 +79,7 @@ npm_package(
         ":tinyland_content",
     ],
     package = "@tummycrypt/tinyland-content",
-    version = "0.2.4",
+    version = "0.3.0",
     visibility = ["//visibility:public"],
 )
 
@@ -84,6 +90,7 @@ vitest_bin.vitest_test(
         "tsconfig.json",
         ":node_modules/vitest",
         "vitest.config.ts",
+        ":node_modules/@tummycrypt/tinyland-content-types",
         ":node_modules/@tummycrypt/tinyland-event-loader",
         ":node_modules/@tummycrypt/tinyland-product-loader",
         ":node_modules/@tummycrypt/tinyland-profile-loader",

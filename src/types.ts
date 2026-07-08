@@ -16,49 +16,15 @@
 
 
 
-export type ContentVisibility = 'public' | 'unlisted' | 'followers' | 'private' | 'direct';
+// Visibility model is owned by @tummycrypt/tinyland-content-types (>= 0.3.0,
+// fail-closed migrateVisibility). Re-exported here for backwards compatibility.
+import type { ContentVisibility } from '@tummycrypt/tinyland-content-types';
 
-
-
-
-export const CONTENT_VISIBILITY_VALUES = ['public', 'unlisted', 'followers', 'private', 'direct'] as const;
-
-
-
-
-
-
-
-
-
-
-
-
-
-export function migrateVisibility(legacy: string | undefined): ContentVisibility {
-  if (!legacy) return 'public';
-
-  const normalized = legacy.toLowerCase();
-
-  switch (normalized) {
-    case 'public':
-    case 'published':
-      return 'public';
-    case 'unlisted':
-      return 'unlisted';
-    case 'members':
-    case 'followers':
-      return 'followers';
-    case 'admin':
-    case 'private':
-    case 'draft':
-      return 'private';
-    case 'direct':
-      return 'direct';
-    default:
-      return 'public';
-  }
-}
+export type { ContentVisibility };
+export {
+  CONTENT_VISIBILITY_VALUES,
+  migrateVisibility,
+} from '@tummycrypt/tinyland-content-types';
 
 
 
