@@ -5,6 +5,7 @@
 
 
 export {
+  shouldIncludeByVisibility,
   loadUserContent,
   loadBlogPosts,
   loadNotes,

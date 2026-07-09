@@ -61,7 +61,16 @@ function getAllUserHandles(): string[] {
 
 
 
-function shouldIncludeByVisibility(
+/**
+ * Shared visibility allowlist for content projection surfaces.
+ *
+ * This is the single decision point used by the outbox/featured collection
+ * loaders AND (via isPubliclyDeliverableObject in the app) by the per-object
+ * ActivityPub routes, so the listing surface and the object surface cannot
+ * drift apart. Exported for TIN-2423 fail-open sweep (AP object visibility
+ * gate): non-public objects must 404 on anonymous AP fetches.
+ */
+export function shouldIncludeByVisibility(
   visibility: string,
   options: LoadContentOptions
 ): boolean {
