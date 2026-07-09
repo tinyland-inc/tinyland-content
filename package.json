@@ -1,6 +1,6 @@
 {
   "name": "@tummycrypt/tinyland-content",
-  "version": "0.2.4",
+  "version": "0.2.5",
   "description": "Content management services for markdown-based content with versioning, scheduling, and relationship resolution",
   "type": "module",
   "license": "Zlib AND LicenseRef-Tinyland-Proprietary",
