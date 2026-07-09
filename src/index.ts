@@ -83,6 +83,7 @@ export {
 
 
 export {
+  shouldIncludeByVisibility,
   loadUserContent,
   loadBlogPosts,
   loadNotes,
