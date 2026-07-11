@@ -3,6 +3,12 @@
 // fix, findContentBySlug()/loadSingleUserContent() read only the live content
 // dir (an empty PVC in prod), so every /blog/[slug] detail page 404ed
 // ("Blog post not found") while /blog listed the same bundled posts.
+//
+// Hardening: the overlay must NOT leak drafts. The by-slug path applies the
+// same public gate (published AND public visibility) the listing applies, so a
+// bundled-only draft/private post stays a 404 on EVERY public by-slug API;
+// auth-gated raw consumers opt in via { includeUnpublished: true }. It must also
+// shadow live-over-bundled ACROSS extensions (keyed by slug, not filename).
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { configureContent, resetContentConfig } from '../src/config.js';
 
@@ -143,15 +149,59 @@ describe('single-slug loaders share the listing bundled+live overlay (TIN-1952)'
     expect(findContentBySlug('blog', 'live-only')!.content).toContain('l');
   });
 
-  // (c) unpublished/private stays hidden by slug even when bundled — the same
-  // shared gate that hides it from the listing hides it on the by-slug surface,
-  // and the overlay does not launder a private bundled post into public.
-  describe('visibility/published gating stays identical to listing behavior', () => {
-    it('keeps a private bundled post hidden by slug exactly as the public listing hides it', async () => {
-      const { findContentBySlug } = await import('../src/loaders/userContentLoader.js');
-      const { loadBlogPostsSync } = await import('../src/loaders/blogLoader.js');
-      const { shouldIncludeByVisibility } = await import(
-        '../src/services/ContentLoaderService.js'
+  // (b2) live .mdx shadows a bundled .md of the SAME slug (cross-extension).
+  // Regression for the extension-shadowing edge: the overlay is keyed by slug,
+  // not filename, so a live foo.mdx overrides a bundled foo.md instead of both
+  // surviving. Holds for listing AND by-slug (both use loadFromUserDirectory).
+  it('lets a live .mdx shadow a bundled .md of the same slug (keyed by slug, not filename)', async () => {
+    const { loadSingleUserContent, findContentBySlug } = await import(
+      '../src/loaders/userContentLoader.js'
+    );
+    const { loadBlogPostsSync } = await import('../src/loaders/blogLoader.js');
+
+    setupMockFs(
+      {
+        '/test/bundled/users/jess/blog/dispatch.md': post('Bundled MD', 'stale bundled'),
+        '/test/content/users/jess/blog/dispatch.mdx': post('Live MDX', 'fresh live'),
+      },
+      {
+        '/test/bundled/users': ['jess'],
+        '/test/bundled/users/jess/blog': ['dispatch.md'],
+        '/test/content/users': ['jess'],
+        '/test/content/users/jess/blog': ['dispatch.mdx'],
+      }
+    );
+
+    // by-slug: the live .mdx wins; the stale bundled .md does not resurface.
+    for (const loaded of [
+      loadSingleUserContent('blog', 'dispatch', 'jess'),
+      findContentBySlug('blog', 'dispatch'),
+    ]) {
+      expect(loaded).not.toBeNull();
+      expect(loaded!.metadata.title).toBe('Live MDX');
+      expect(loaded!.content).toContain('fresh live');
+      expect(loaded!.filePath).toBe('/test/content/users/jess/blog/dispatch.mdx');
+    }
+
+    // listing: exactly one 'dispatch' entry, and it is the live .mdx (no dup).
+    const dispatch = loadBlogPostsSync({ handle: 'jess' }).filter(
+      (p) => p.slug === 'dispatch'
+    );
+    expect(dispatch).toHaveLength(1);
+    expect(dispatch[0].frontmatter.title).toBe('Live MDX');
+  });
+
+  // (c) unpublished/private is NOT resolvable by slug even when bundled — the
+  // by-slug path applies the SAME public gate the listing applies. The public
+  // API (loadBlogPost et al.) returns null; only auth-gated raw consumers that
+  // pass includeUnpublished still see the draft, verbatim (no laundering).
+  // Invariant: a by-slug lookup returns a post IFF the public listing includes it.
+  describe('by-slug gate matches the public listing (no draft leak)', () => {
+    it('hides a private bundled post from EVERY public by-slug API while the raw opt-out still resolves it', async () => {
+      const { loadSingleUserContent, findContentBySlug, getUserContentFilePath } =
+        await import('../src/loaders/userContentLoader.js');
+      const { loadBlogPost, loadBlogPostSync, loadBlogPostsSync } = await import(
+        '../src/loaders/blogLoader.js'
       );
       const { migrateVisibility } = await import('../src/types.js');
       const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
@@ -179,31 +229,49 @@ describe('single-slug loaders share the listing bundled+live overlay (TIN-1952)'
           .sort();
         expect(listed).toEqual(['open']);
 
-        // The overlay itself is NOT a visibility filter: the private post is
-        // still resolvable by slug (so this is a gate, not a 404), but it
-        // carries its private visibility unchanged — no laundering to public.
-        const secret = findContentBySlug('blog', 'secret');
-        expect(secret).not.toBeNull();
-        expect(migrateVisibility(secret!.metadata.visibility as string)).toBe('private');
+        // Every exported public by-slug API refuses the private post by default.
+        expect(await loadBlogPost('secret')).toBeNull();
+        expect(loadBlogPostSync('secret')).toBeNull();
+        expect(loadSingleUserContent('blog', 'secret', 'jess')).toBeNull();
+        expect(findContentBySlug('blog', 'secret')).toBeNull();
+        expect(getUserContentFilePath('blog', 'secret')).toBeNull();
 
-        // The shared object gate (used by the per-object AP/detail surface) must
-        // reach the same verdict as the listing for every slug: the set of slugs
-        // an anonymous by-slug fetch may surface == the public listing set.
-        const anonVisibleBySlug = ['open', 'secret'].filter((slug) => {
-          const c = findContentBySlug('blog', slug);
-          if (!c) return false;
-          const v = migrateVisibility(c.metadata.visibility as string);
-          return shouldIncludeByVisibility(v, {});
+        // ...while the public post still resolves through all of them.
+        expect(await loadBlogPost('open')).not.toBeNull();
+        expect(loadSingleUserContent('blog', 'open', 'jess')).not.toBeNull();
+        expect(findContentBySlug('blog', 'open')).not.toBeNull();
+
+        // The auth-gated raw opt-out (admin/owner preview) still resolves the
+        // private post verbatim, visibility preserved (no laundering to public).
+        const rawSecret = findContentBySlug('blog', 'secret', {
+          includeUnpublished: true,
         });
+        expect(rawSecret).not.toBeNull();
+        expect(migrateVisibility(rawSecret!.metadata.visibility as string)).toBe(
+          'private'
+        );
+        expect(
+          loadSingleUserContent('blog', 'secret', 'jess', { includeUnpublished: true })
+        ).not.toBeNull();
+        expect(
+          getUserContentFilePath('blog', 'secret', { includeUnpublished: true })
+        ).toBe('/test/bundled/users/jess/blog/secret.md');
+
+        // Invariant: the anonymous by-slug set == the public listing set.
+        const anonVisibleBySlug = ['open', 'secret'].filter(
+          (slug) => findContentBySlug('blog', slug) !== null
+        );
         expect(anonVisibleBySlug).toEqual(listed); // ['open'] — secret stays hidden
       } finally {
         warnSpy.mockRestore();
       }
     });
 
-    it('keeps an unpublished (published:false) bundled post out of the published-only listing while still surfacing its draft frontmatter by slug', async () => {
+    it('hides an unpublished (published:false) bundled post from the public by-slug APIs while the raw opt-out preserves its draft frontmatter', async () => {
       const { findContentBySlug } = await import('../src/loaders/userContentLoader.js');
-      const { loadBlogPostsSync } = await import('../src/loaders/blogLoader.js');
+      const { loadBlogPost, loadBlogPostsSync } = await import(
+        '../src/loaders/blogLoader.js'
+      );
 
       setupMockFs(
         {
@@ -224,9 +292,13 @@ describe('single-slug loaders share the listing bundled+live overlay (TIN-1952)'
         .sort();
       expect(published).toEqual(['live-post']);
 
-      // The overlay still resolves the draft by slug, preserving published:false
-      // so a publishedOnly-gated caller can hide it identically to the listing.
-      const draft = findContentBySlug('blog', 'draft');
+      // The public by-slug APIs hide the draft identically to the listing.
+      expect(await loadBlogPost('draft')).toBeNull();
+      expect(findContentBySlug('blog', 'draft')).toBeNull();
+
+      // The raw opt-out still resolves the draft, preserving published:false so
+      // an auth-gated admin/preview caller can edit it.
+      const draft = findContentBySlug('blog', 'draft', { includeUnpublished: true });
       expect(draft).not.toBeNull();
       expect(draft!.metadata.published).toBe(false);
     });
