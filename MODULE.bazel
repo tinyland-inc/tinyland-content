@@ -1,6 +1,6 @@
 module(
     name = "tummycrypt_tinyland_content",
-    version = "0.3.1",
+    version = "0.3.2",
     compatibility_level = 1,
 )
 
@@ -12,7 +12,7 @@ bazel_dep(name = "platforms", version = "1.0.0")
 bazel_dep(name = "rules_nodejs", version = "6.7.3")
 
 # Inter-module dependencies
-bazel_dep(name = "tummycrypt_tinyland_content_types", version = "0.3.0")
+bazel_dep(name = "tummycrypt_tinyland_content_types", version = "0.3.1")
 bazel_dep(name = "tummycrypt_tinyland_event_loader", version = "0.2.3")
 bazel_dep(name = "tummycrypt_tinyland_product_loader", version = "0.2.3")
 bazel_dep(name = "tummycrypt_tinyland_profile_loader", version = "0.2.3")

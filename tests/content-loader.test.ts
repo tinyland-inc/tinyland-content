@@ -471,7 +471,9 @@ describe('ContentLoaderService', () => {
       expect(migrateVisibility('private')).toBe('private');
       expect(migrateVisibility('draft')).toBe('private');
       expect(migrateVisibility('direct')).toBe('direct');
-      expect(migrateVisibility(undefined)).toBe('public');
+      expect(migrateVisibility(undefined)).toBe('private');
+      expect(migrateVisibility(null)).toBe('private');
+      expect(migrateVisibility('')).toBe('private');
     });
 
     it('fails closed to private on unknown or typo values', async () => {
@@ -489,7 +491,7 @@ describe('ContentLoaderService', () => {
     });
   });
 
-  describe('normalizeProfileVisibility via loadProfiles', () => {
+  describe('profile visibility via loadProfiles', () => {
     const profileWith = (visibility?: string) =>
       [
         '---',
@@ -543,7 +545,7 @@ describe('ContentLoaderService', () => {
       }
     });
 
-    it('keeps legacy values public through normalizeProfileVisibility', async () => {
+    it('keeps explicit legacy values public', async () => {
       const { loadProfiles } = await import('../src/services/ContentLoaderService.js');
 
       setupMockFs(
@@ -560,7 +562,7 @@ describe('ContentLoaderService', () => {
       expect(items[0].visibility).toBe('public');
     });
 
-    it('defaults missing visibility to public unless published is false', async () => {
+    it('defaults missing visibility to private', async () => {
       const { loadProfiles } = await import('../src/services/ContentLoaderService.js');
 
       setupMockFs(
@@ -572,9 +574,11 @@ describe('ContentLoaderService', () => {
         }
       );
 
-      const items = await loadProfiles();
+      expect(await loadProfiles()).toHaveLength(0);
+
+      const items = await loadProfiles({ includePrivate: true });
       expect(items).toHaveLength(1);
-      expect(items[0].visibility).toBe('public');
+      expect(items[0].visibility).toBe('private');
     });
   });
 
@@ -613,7 +617,7 @@ describe('ContentLoaderService', () => {
       }
     });
 
-    it('loadPostBySlug keeps absent visibility public (absent is NOT unknown)', async () => {
+    it('loadPostBySlug resolves absent visibility to private', async () => {
       const { loadPostBySlug } = await import('../src/services/ContentLoaderService.js');
 
       setupMockFs(
@@ -628,7 +632,7 @@ describe('ContentLoaderService', () => {
 
       const post = await loadPostBySlug('default-post');
       expect(post).not.toBeNull();
-      expect(post!.visibility).toBe('public');
+      expect(post!.visibility).toBe('private');
     });
 
     it('loadPostBySlug keeps legacy published visibility public', async () => {
@@ -673,7 +677,7 @@ describe('ContentLoaderService', () => {
       }
     });
 
-    it('loadEventBySlug keeps absent visibility public with undefined fediverseVisibility', async () => {
+    it('loadEventBySlug resolves absent visibility and federation visibility to private', async () => {
       const { loadEventBySlug } = await import('../src/services/ContentLoaderService.js');
 
       setupMockFs(
@@ -688,8 +692,8 @@ describe('ContentLoaderService', () => {
 
       const event = await loadEventBySlug('default-event');
       expect(event).not.toBeNull();
-      expect(event!.visibility).toBe('public');
-      expect(event!.fediverseVisibility).toBeUndefined();
+      expect(event!.visibility).toBe('private');
+      expect(event!.fediverseVisibility).toBe('private');
     });
   });
 
@@ -754,7 +758,7 @@ describe('ContentLoaderService', () => {
       expect(posts[0].visibility).toBe('public');
     });
 
-    it('federatedOnly excludes typo fediverse visibility (fail closed) but keeps absent public', async () => {
+    it('federatedOnly excludes typo and absent visibility', async () => {
       const { loadEvents } = await import('../src/services/ContentLoaderService.js');
       const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
 
@@ -775,11 +779,10 @@ describe('ContentLoaderService', () => {
       try {
         const federated = await loadEvents({
           handle: 'testuser',
+          includePrivate: true,
           federatedOnly: true,
         });
-        expect(federated.map((e) => e.slug)).toEqual(['open-event']);
-        expect(federated[0].visibility).toBe('public');
-        expect(federated[0].fediverseVisibility).toBe('public');
+        expect(federated).toEqual([]);
       } finally {
         warnSpy.mockRestore();
       }

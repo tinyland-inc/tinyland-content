@@ -16,7 +16,7 @@
 
 
 
-// Visibility model is owned by @tummycrypt/tinyland-content-types (>= 0.3.0,
+// Visibility model is owned by @tummycrypt/tinyland-content-types (>= 0.3.1,
 // fail-closed migrateVisibility). Re-exported here for backwards compatibility.
 import type { ContentVisibility } from '@tummycrypt/tinyland-content-types';
 

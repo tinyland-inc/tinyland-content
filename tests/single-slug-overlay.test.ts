@@ -60,7 +60,7 @@ function post(
     `title: ${title}`,
     'author: jess',
     'publishedAt: "2025-01-01"',
-    ...(extra.visibility ? [`visibility: ${extra.visibility}`] : []),
+    `visibility: ${extra.visibility ?? 'public'}`,
     ...(extra.published === false ? ['published: false'] : []),
     '---',
     body,
