@@ -434,6 +434,19 @@ export async function loadProfiles(
 
 
 
+/**
+ * Live-content-only by-slug path resolver for the admin CRUD triad
+ * (loadPostBySlug / updatePost / deletePost, and the event equivalents).
+ *
+ * DELIBERATELY does NOT apply the bundled+live overlay that the public
+ * userContentLoader by-slug path (findContentBySlug / loadSingleUserContent →
+ * loadBlogPost) uses. This resolver only ever sees the writable live contentDir
+ * because its callers write there: updatePost/deletePost mutate found.filePath,
+ * and bundled content is a read-only shipped baseline (no copy-on-write). Adding
+ * the overlay here would let an admin *load* a bundled-only post that the paired
+ * write op then fails to save — a worse footgun than the honest fail-fast 404.
+ * The overlay gap is intentional, not the TIN-1952 bug.
+ */
 function findContentPath(
   contentType: string,
   slug: string
@@ -466,6 +479,25 @@ function findContentPath(
 
 
 
+/**
+ * ADMIN-ONLY RAW by-slug blog loader. Returns the post's frontmatter/content
+ * VERBATIM with no visibility/published gate — a `published:false` / `private`
+ * draft resolves non-null. This is intentional: its sole consumer is the
+ * auth-gated member/admin edit surface (admin/member/posts/[slug]/edit), which
+ * must load drafts to edit them.
+ *
+ * ⚠️ NOT a public by-slug loader and NOT interchangeable with `loadBlogPost`.
+ * Two deliberate divergences from `loadBlogPost` (loaders/blogLoader →
+ * userContentLoader.findContentBySlug):
+ *   1. No bundled+live overlay — live contentDir only (see findContentPath;
+ *      paired with the live-only updatePost/deletePost writes).
+ *   2. No public-surface gate — raw by design for admin editing.
+ * Do NOT wire this to a public request path: it would leak drafts/private
+ * content, violating the org no-auto-publish invariant. Public by-slug reads
+ * MUST use `loadBlogPost`, which is overlay-aware AND fail-closed by default
+ * (opt into raw there via `{ includeUnpublished: true }` only from auth-gated
+ * admin/preview callers). See userContentLoader.SingleContentOptions.
+ */
 export async function loadPostBySlug(slug: string): Promise<ContentItem | null> {
   const found = findContentPath('blog', slug);
 

@@ -14,6 +14,7 @@ import { existsSync, readdirSync, readFileSync } from 'fs';
 import matter from 'gray-matter';
 import { getContentConfig } from '../config.js';
 import type { LoadedContent, LoadOptions } from '../types.js';
+import { migrateVisibility } from '../types.js';
 
 
 
@@ -137,23 +138,82 @@ export function loadUserContent(
 
 
 
+/**
+ * Gate options for the by-slug loaders.
+ *
+ * The by-slug loaders are fail-closed by default: they return a post ONLY IF
+ * the public listing would include it (published AND public visibility). This
+ * is the org no-auto-publish invariant. Before the bundled+live overlay landed
+ * (TIN-1952) a bundled-only draft/private post 404ed on an empty prod PVC; the
+ * overlay made it raw-resolvable by slug, so without this gate the fix would
+ * have turned that 404 into a draft leak. The gate restores the invariant:
+ * a by-slug lookup returns a post IFF the public listing would include it.
+ *
+ * `includeUnpublished` is the explicit raw opt-out for auth-gated internal
+ * consumers that legitimately need drafts / non-public content: the member &
+ * admin edit + preview surfaces (admin/<type>/edit, duplicate-slug checks), owner
+ * self-preview on @[handle]/… detail routes, and the scheduling / bulk file-path
+ * resolvers (scheduling a draft must first resolve it). When true the loader
+ * skips the gate and returns the post even if it is unpublished
+ * (published:false / draft:true) or non-public (private/unlisted/followers/
+ * direct). Public request paths MUST leave it unset so unpublished content
+ * stays a 404.
+ */
+export interface SingleContentOptions {
+  includeUnpublished?: boolean;
+}
+
+/**
+ * The by-slug public-surface gate. Mirrors the /blog/[slug] route gate and the
+ * gated listing (visibility:['public'] + publishedOnly): a post is surfaced iff
+ * it is published (not published:false / draft:true) AND its fail-closed
+ * normalized visibility is 'public'. Raw consumers bypass via includeUnpublished.
+ */
+function passesBySlugGate(
+  metadata: Record<string, unknown>,
+  options: SingleContentOptions
+): boolean {
+  if (options.includeUnpublished) {
+    return true;
+  }
+
+  const published = metadata.published !== false && metadata.draft !== true;
+  if (!published) {
+    return false;
+  }
+
+  return (
+    migrateVisibility(metadata.visibility as string | undefined) === 'public'
+  );
+}
+
+
 export function loadSingleUserContent(
   contentType: ContentType,
   slug: string,
-  handle: string
+  handle: string,
+  options: SingleContentOptions = {}
 ): LoadedContent | null {
+  // TIN-1952/TIN-1931: resolve the slug against the SAME bundled+live overlay
+  // the listing loaders use, so a post visible in /blog is loadable by slug.
+  // Reusing loadFromUserDirectory means live (contentDir) wins when both dirs
+  // define the slug, and bundledContentDir is the fallback when the live PVC is
+  // empty. Previously this read only the live dir, so bundled-only posts 404ed
+  // on the detail page while still rendering in the listing.
   const extensions = ['.md', '.mdx'];
-  const userDir = getUserContentDir(handle, contentType);
-
-  for (const ext of extensions) {
-    const filePath = join(userDir, `${slug}${ext}`);
-    const content = loadSingleFile(filePath, handle);
-    if (content) {
-      return content;
-    }
+  const overlaid = loadFromUserDirectory(handle, contentType, extensions);
+  const found = overlaid.find((item) => item.slug === slug) ?? null;
+  if (!found) {
+    return null;
   }
 
-  return null;
+  // Fail closed: the overlay now resolves bundled-only posts, so a draft/private
+  // bundled post must not become reachable by slug just because it exists in the
+  // baseline. Apply the same visibility/published gate the public listing uses;
+  // auth-gated raw consumers pass includeUnpublished to bypass it.
+  return passesBySlugGate(found.metadata as Record<string, unknown>, options)
+    ? found
+    : null;
 }
 
 
@@ -161,20 +221,21 @@ export function loadSingleUserContent(
 
 export function findContentBySlug(
   contentType: ContentType,
-  slug: string
+  slug: string,
+  options: SingleContentOptions = {}
 ): LoadedContent | null {
-  const usersDir = getUsersDir();
-
-  if (!existsSync(usersDir)) {
-    return null;
-  }
-
-  const userDirs = readdirSync(usersDir, { withFileTypes: true })
-    .filter((d) => d.isDirectory())
-    .map((d) => d.name);
-
-  for (const handle of userDirs) {
-    const content = loadSingleUserContent(contentType, slug, handle);
+  // TIN-1952/TIN-1931: enumerate handles from BOTH the bundled baseline and the
+  // live content root (union), mirroring loadFromAllUserDirectories. When the
+  // live PVC is empty the live users dir may not exist at all, so the previous
+  // live-only enumeration returned null for every bundled-only author — the
+  // root cause of /blog/[slug] 404s while /blog listed the same posts.
+  //
+  // The by-slug gate lives in loadSingleUserContent (the shared single-item
+  // resolver), so every exported by-slug API that routes through it — this
+  // finder, loadBlogPost/loadBlogPostSync, and getUserContentFilePath — inherits
+  // the fail-closed default and the includeUnpublished opt-out uniformly.
+  for (const handle of getOverlaidUserHandles()) {
+    const content = loadSingleUserContent(contentType, slug, handle, options);
     if (content) {
       return content;
     }
@@ -296,14 +357,18 @@ const CONTENT_TYPE_DIR_MAP: Record<string, ContentType> = {
 
 export function getUserContentFilePath(
   contentType: string,
-  slug: string
+  slug: string,
+  options: SingleContentOptions = {}
 ): string | null {
   const normalizedType = CONTENT_TYPE_DIR_MAP[contentType];
   if (!normalizedType) {
     return null;
   }
 
-  const content = findContentBySlug(normalizedType, slug);
+  // Inherits the by-slug gate via findContentBySlug: a draft/private post's
+  // path resolves only for raw consumers (e.g. scheduling a not-yet-published
+  // post) that pass includeUnpublished; public callers get null for hidden slugs.
+  const content = findContentBySlug(normalizedType, slug, options);
   if (content) {
     return content.filePath;
   }
@@ -372,7 +437,7 @@ function loadFilesFromDir(
   dir: string,
   handle: string,
   extensions: string[],
-  byFileName: Map<string, LoadedContent>
+  bySlug: Map<string, LoadedContent>
 ): void {
   if (!existsSync(dir)) {
     return;
@@ -389,7 +454,12 @@ function loadFilesFromDir(
       const { data: metadata, content } = matter(fileContent);
       const slug = file.replace(/\.(md|mdx)$/, '');
 
-      byFileName.set(file, {
+      // Key by slug (basename sans extension), NOT the full filename, so live
+      // shadows bundled ACROSS extensions: a live `foo.mdx` must override a
+      // bundled `foo.md` of the same slug. Keying by filename left both in the
+      // map (distinct keys), leaking the stale bundled copy into the listing and
+      // letting the by-slug .find() return whichever came first (bundled).
+      bySlug.set(slug, {
         slug,
         metadata,
         content,
@@ -416,23 +486,26 @@ function loadFromUserDirectory(
     ? join(bundledUsersDir, handle, contentType)
     : undefined;
 
-
-  const byFileName = new Map<string, LoadedContent>();
+  // Bundled first, then live — live entries overwrite bundled ones per slug.
+  const bySlug = new Map<string, LoadedContent>();
   if (bundledDir) {
-    loadFilesFromDir(bundledDir, handle, extensions, byFileName);
+    loadFilesFromDir(bundledDir, handle, extensions, bySlug);
   }
-  loadFilesFromDir(liveDir, handle, extensions, byFileName);
+  loadFilesFromDir(liveDir, handle, extensions, bySlug);
 
-  return Array.from(byFileName.values());
+  return Array.from(bySlug.values());
 }
 
-function loadFromAllUserDirectories(
-  contentType: ContentType,
-  extensions: string[]
-): LoadedContent[] {
+/**
+ * Enumerate every user handle that owns a directory in either the bundled
+ * baseline or the live content root (union, bundled first). Shared by the
+ * aggregate listing loader and the single-slug finder so both see the same
+ * handle set — critical when the live users dir is an empty/absent PVC
+ * (TIN-1952) and an author exists only under bundledContentDir.
+ */
+function getOverlaidUserHandles(): string[] {
   const liveUsersDir = getUsersDir();
   const bundledUsersDir = getBundledUsersDir();
-
 
   const handles = new Set<string>();
   for (const dir of [bundledUsersDir, liveUsersDir]) {
@@ -446,8 +519,15 @@ function loadFromAllUserDirectories(
     }
   }
 
+  return Array.from(handles);
+}
+
+function loadFromAllUserDirectories(
+  contentType: ContentType,
+  extensions: string[]
+): LoadedContent[] {
   const results: LoadedContent[] = [];
-  for (const handle of Array.from(handles)) {
+  for (const handle of getOverlaidUserHandles()) {
     const userContent = loadFromUserDirectory(handle, contentType, extensions);
     results.push(...userContent);
   }
@@ -455,35 +535,3 @@ function loadFromAllUserDirectories(
   return results;
 }
 
-function loadSingleFile(
-  filePath: string,
-  handle: string
-): LoadedContent | null {
-  if (!existsSync(filePath)) {
-    return null;
-  }
-
-  try {
-    const fileContent = readFileSync(filePath, 'utf-8');
-    const { data: metadata, content } = matter(fileContent);
-    const slug =
-      filePath
-        .split('/')
-        .pop()
-        ?.replace(/\.(md|mdx)$/, '') || '';
-
-    return {
-      slug,
-      metadata,
-      content,
-      filePath,
-      ownerHandle: handle,
-    };
-  } catch (error) {
-    console.error(
-      `[UserContentLoader] Failed to load ${filePath}:`,
-      error
-    );
-    return null;
-  }
-}

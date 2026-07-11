@@ -163,7 +163,7 @@ export {
   getUserContentFilePathByHandle,
   findUserContentFilePath,
 } from './loaders/index.js';
-export type { UserContentType } from './loaders/index.js';
+export type { UserContentType, SingleContentOptions } from './loaders/index.js';
 
 export {
   loadBlogPosts as loadBlogPostsFromLoader,

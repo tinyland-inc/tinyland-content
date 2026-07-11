@@ -52,4 +52,4 @@ export {
   getUserContentFilePathByHandle,
   findUserContentFilePath,
 } from './userContentLoader.js';
-export type { ContentType as UserContentType } from './userContentLoader.js';
+export type { ContentType as UserContentType, SingleContentOptions } from './userContentLoader.js';
