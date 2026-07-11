@@ -183,7 +183,7 @@ function passesBySlugGate(
   }
 
   return (
-    migrateVisibility(metadata.visibility as string | undefined) === 'public'
+    migrateVisibility(metadata.visibility as string | null | undefined) === 'public'
   );
 }
 
@@ -534,4 +534,3 @@ function loadFromAllUserDirectories(
 
   return results;
 }
-

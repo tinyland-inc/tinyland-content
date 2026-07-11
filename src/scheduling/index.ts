@@ -372,10 +372,9 @@ export class ScheduledPublishingService {
             updatedAt: parsed.data.updatedAt as string,
             authorHandle:
               (parsed.data.author as string) || 'admin',
-            // Fail closed: unknown/typo values resolve to 'private' before the
-            // item is handed to federation hooks; absent stays 'public'.
+            // Fail closed before the item is handed to federation hooks.
             visibility: migrateVisibility(
-              parsed.data.visibility as string | undefined
+              parsed.data.visibility as string | null | undefined
             ),
           };
 

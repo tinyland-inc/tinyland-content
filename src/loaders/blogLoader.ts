@@ -314,9 +314,10 @@ function matchesFilters(
     return false;
   }
 
-  // Fail closed: unknown/typo values resolve to 'private' (never widen
-  // exposure); absent visibility stays 'public'.
-  const postVisibility = migrateVisibility(frontmatter.visibility as string | undefined);
+  // Fail closed: unknown, typo, and absent values resolve to 'private'.
+  const postVisibility = migrateVisibility(
+    frontmatter.visibility as string | null | undefined
+  );
   if (options.visibility && !options.visibility.includes(postVisibility)) {
     return false;
   }

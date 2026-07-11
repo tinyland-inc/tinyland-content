@@ -100,8 +100,7 @@ function shouldIncludeByFediverseVisibility(
     return true;
   }
 
-  // Fail closed: unknown/typo values normalize to 'private' via
-  // migrateVisibility; absent values stay 'public' (absent is NOT unknown).
+  // Fail closed: unknown, typo, and absent values normalize to 'private'.
   const fediverseVisibility = migrateVisibility(
     (metadata.fediverseVisibility as string) ||
       (metadata.visibility as string) ||
@@ -119,22 +118,6 @@ function shouldIncludeByFediverseVisibility(
   }
 
   return true;
-}
-
-
-
-
-function normalizeProfileVisibility(
-  visibility: string | undefined,
-  published: boolean | undefined
-): ContentVisibility {
-  if (visibility) {
-    return migrateVisibility(visibility);
-  }
-
-  if (published === false) return 'private';
-
-  return 'public';
 }
 
 
@@ -192,9 +175,10 @@ function loadContentType(
 
         const slug = file.replace(/\.(md|mdx)$/, '');
 
-        // Fail closed: unknown/typo values resolve to 'private'; absent
-        // visibility stays 'public'.
-        const visibility = migrateVisibility(metadata.visibility as string | undefined);
+        // Fail closed: unknown, typo, and absent values resolve to 'private'.
+        const visibility = migrateVisibility(
+          metadata.visibility as string | null | undefined
+        );
         if (!shouldIncludeByVisibility(visibility, options)) {
           continue;
         }
@@ -388,9 +372,8 @@ export async function loadProfiles(
       const slug = (metadata.slug as string) || handle;
       const authorHandle = (metadata.handle as string) || handle;
 
-      const visibility = normalizeProfileVisibility(
-        metadata.visibility as string | undefined,
-        metadata.published as boolean | undefined
+      const visibility = migrateVisibility(
+        metadata.visibility as string | null | undefined
       );
       if (!shouldIncludeByVisibility(visibility, options)) {
         continue;
@@ -517,8 +500,10 @@ export async function loadPostBySlug(slug: string): Promise<ContentItem | null> 
       publishedAt: (metadata.publishedAt as string) || (metadata.date as string),
       updatedAt: metadata.updatedAt as string | undefined,
       authorHandle: found.handle,
-      // Fail closed: unknown/typo values resolve to 'private'; absent stays 'public'.
-      visibility: migrateVisibility(metadata.visibility as string | undefined),
+      // Fail closed: unknown, typo, and absent values resolve to 'private'.
+      visibility: migrateVisibility(
+        metadata.visibility as string | null | undefined
+      ),
     };
   } catch (error) {
     getLogger().error(`[ContentLoader] Failed to load blog post ${slug}:`, {
@@ -546,6 +531,10 @@ export async function loadEventBySlug(slug: string): Promise<ContentItem | null>
       (metadata.fediverseVisibility as string | undefined) ||
       (metadata.visibility as string | undefined);
 
+    const visibility = migrateVisibility(
+      metadata.visibility as string | null | undefined
+    );
+
     return {
       type: 'event',
       slug,
@@ -557,11 +546,11 @@ export async function loadEventBySlug(slug: string): Promise<ContentItem | null>
         (metadata.startDateTime as string),
       updatedAt: metadata.updatedAt as string | undefined,
       authorHandle: found.handle,
-      // Fail closed: unknown/typo values resolve to 'private'; absent stays 'public'.
-      visibility: migrateVisibility(metadata.visibility as string | undefined),
+      // Fail closed: unknown, typo, and absent values resolve to 'private'.
+      visibility,
       fediverseVisibility: rawFediverseVisibility
         ? migrateVisibility(rawFediverseVisibility)
-        : undefined,
+        : visibility,
       fediverseId: metadata.activityPubId as string | undefined,
     };
   } catch (error) {

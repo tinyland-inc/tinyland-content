@@ -259,7 +259,7 @@ describe('ScheduledPublishingService', () => {
       }
     });
 
-    it('keeps absent visibility public through publish hooks', async () => {
+    it('fails closed on absent visibility before publish hooks', async () => {
       const service = await getService();
       await service.initialize();
 
@@ -290,7 +290,7 @@ describe('ScheduledPublishingService', () => {
       expect(results).toHaveLength(1);
       expect(results[0].federated).toBe(true);
       expect(seen).toHaveLength(1);
-      expect(seen[0].visibility).toBe('public');
+      expect(seen[0].visibility).toBe('private');
     });
   });
 

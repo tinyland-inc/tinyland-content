@@ -117,7 +117,7 @@ describe('blogLoader visibility filter fails closed (TIN-2656)', () => {
     }
   });
 
-  it('keeps legacy published and absent visibility posts in public filters', async () => {
+  it('keeps legacy published public and defaults absent visibility to private', async () => {
     const { loadBlogPostsSync } = await import('../src/loaders/blogLoader.js');
 
     setupMockFs(
@@ -135,6 +135,12 @@ describe('blogLoader visibility filter fails closed (TIN-2656)', () => {
       handle: 'testuser',
       visibility: ['public'],
     });
-    expect(posts.map((p) => p.slug).sort()).toEqual(['default-post', 'legacy-post']);
+    expect(posts.map((p) => p.slug)).toEqual(['legacy-post']);
+
+    const privatePosts = loadBlogPostsSync({
+      handle: 'testuser',
+      visibility: ['private'],
+    });
+    expect(privatePosts.map((p) => p.slug)).toEqual(['default-post']);
   });
 });
