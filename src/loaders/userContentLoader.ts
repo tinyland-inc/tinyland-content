@@ -142,18 +142,15 @@ export function loadSingleUserContent(
   slug: string,
   handle: string
 ): LoadedContent | null {
+  // TIN-1952/TIN-1931: resolve the slug against the SAME bundled+live overlay
+  // the listing loaders use, so a post visible in /blog is loadable by slug.
+  // Reusing loadFromUserDirectory means live (contentDir) wins when both dirs
+  // define the slug, and bundledContentDir is the fallback when the live PVC is
+  // empty. Previously this read only the live dir, so bundled-only posts 404ed
+  // on the detail page while still rendering in the listing.
   const extensions = ['.md', '.mdx'];
-  const userDir = getUserContentDir(handle, contentType);
-
-  for (const ext of extensions) {
-    const filePath = join(userDir, `${slug}${ext}`);
-    const content = loadSingleFile(filePath, handle);
-    if (content) {
-      return content;
-    }
-  }
-
-  return null;
+  const overlaid = loadFromUserDirectory(handle, contentType, extensions);
+  return overlaid.find((item) => item.slug === slug) ?? null;
 }
 
 
@@ -163,17 +160,12 @@ export function findContentBySlug(
   contentType: ContentType,
   slug: string
 ): LoadedContent | null {
-  const usersDir = getUsersDir();
-
-  if (!existsSync(usersDir)) {
-    return null;
-  }
-
-  const userDirs = readdirSync(usersDir, { withFileTypes: true })
-    .filter((d) => d.isDirectory())
-    .map((d) => d.name);
-
-  for (const handle of userDirs) {
+  // TIN-1952/TIN-1931: enumerate handles from BOTH the bundled baseline and the
+  // live content root (union), mirroring loadFromAllUserDirectories. When the
+  // live PVC is empty the live users dir may not exist at all, so the previous
+  // live-only enumeration returned null for every bundled-only author — the
+  // root cause of /blog/[slug] 404s while /blog listed the same posts.
+  for (const handle of getOverlaidUserHandles()) {
     const content = loadSingleUserContent(contentType, slug, handle);
     if (content) {
       return content;
@@ -426,13 +418,16 @@ function loadFromUserDirectory(
   return Array.from(byFileName.values());
 }
 
-function loadFromAllUserDirectories(
-  contentType: ContentType,
-  extensions: string[]
-): LoadedContent[] {
+/**
+ * Enumerate every user handle that owns a directory in either the bundled
+ * baseline or the live content root (union, bundled first). Shared by the
+ * aggregate listing loader and the single-slug finder so both see the same
+ * handle set — critical when the live users dir is an empty/absent PVC
+ * (TIN-1952) and an author exists only under bundledContentDir.
+ */
+function getOverlaidUserHandles(): string[] {
   const liveUsersDir = getUsersDir();
   const bundledUsersDir = getBundledUsersDir();
-
 
   const handles = new Set<string>();
   for (const dir of [bundledUsersDir, liveUsersDir]) {
@@ -446,8 +441,15 @@ function loadFromAllUserDirectories(
     }
   }
 
+  return Array.from(handles);
+}
+
+function loadFromAllUserDirectories(
+  contentType: ContentType,
+  extensions: string[]
+): LoadedContent[] {
   const results: LoadedContent[] = [];
-  for (const handle of Array.from(handles)) {
+  for (const handle of getOverlaidUserHandles()) {
     const userContent = loadFromUserDirectory(handle, contentType, extensions);
     results.push(...userContent);
   }
@@ -455,35 +457,3 @@ function loadFromAllUserDirectories(
   return results;
 }
 
-function loadSingleFile(
-  filePath: string,
-  handle: string
-): LoadedContent | null {
-  if (!existsSync(filePath)) {
-    return null;
-  }
-
-  try {
-    const fileContent = readFileSync(filePath, 'utf-8');
-    const { data: metadata, content } = matter(fileContent);
-    const slug =
-      filePath
-        .split('/')
-        .pop()
-        ?.replace(/\.(md|mdx)$/, '') || '';
-
-    return {
-      slug,
-      metadata,
-      content,
-      filePath,
-      ownerHandle: handle,
-    };
-  } catch (error) {
-    console.error(
-      `[UserContentLoader] Failed to load ${filePath}:`,
-      error
-    );
-    return null;
-  }
-}
