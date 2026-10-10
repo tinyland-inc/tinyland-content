@@ -1,5 +1,49 @@
 # Changelog
 
+## 0.9.0 — 2026-10-14
+
+Minor release that folds the retired `tummycrypt_tinyland_publishing_hooks`
+module into this package (RU2, RU7). Additive for consumers: no existing
+export or signature changes, and the framework stack is unchanged
+(TypeScript 5.9, Node >= 22), so this is not the RU1 major. Bazel module
+`tummycrypt_tinyland_content` is the only distribution path (RU6).
+
+Added
+
+- Publishing hooks, merged from the retired
+  `tummycrypt_tinyland_publishing_hooks` module
+  (`@tummycrypt/tinyland-publishing-hooks` 0.2.2, repo
+  `xoxd-ai/tinyland-publishing-hooks`, archived). Sources and tests are
+  byte-identical to the 0.2.2 release (and to the tinyland.dev monorepo copy)
+  apart from the test import paths.
+  - New subpath export `@tummycrypt/tinyland-content/publishing-hooks` with
+    the original API: `configurePublishingHooks`, `getPublishingHooksConfig`,
+    `resetPublishingHooksConfig`, `onPublishingChange`, `onContentCreate`,
+    `onContentUpdate`, `onContentDelete`, `onContentSchedule`,
+    `onContentPublish`, `recordContentVersion`, `recordAutoVersion`,
+    `recordCreateVersion`, `recordEditVersion`, `recordStatusChangeVersion`
+    and the `PublishingHooksConfig`, `PublishingHooksLogger`,
+    `PublishingHooksSpan`, `PublishingHooksTracer`,
+    `ScheduledPublishingServiceInterface`, `VersionHistoryServiceInterface`,
+    `ContentFederationInterface`, `CreateSpanFn`, `ContentType`,
+    `UnifiedContentItem`, `PublishingStatus`, `PublishingHookContext` and
+    `PublishingHookResult` types.
+  - The root facade does not re-export these names, so the existing root
+    exports are unchanged. Import them from the subpath.
+
+Migration (publishing hooks consumers)
+
+- Drop `bazel_dep(name = "tummycrypt_tinyland_publishing_hooks", ...)`, any
+  `single_version_override` and its `npm_link_package`, and depend on
+  `tummycrypt_tinyland_content` 0.9.0 or later.
+- Replace `from '@tummycrypt/tinyland-publishing-hooks'` with
+  `from '@tummycrypt/tinyland-content/publishing-hooks'` (same names).
+- Behavior is unchanged: unconfigured hooks still use no-op tracing, logging,
+  scheduling, versioning and federation services and
+  `baseUrl: 'http://localhost:5174'`. The optional `@opentelemetry/api` peer
+  of the old package was never imported; tracing is still injected through
+  `configurePublishingHooks`.
+
 ## 0.8.0 — 2026-10-10
 
 Minor release that folds the retired `tummycrypt_tinyland_profile_loader`
