@@ -328,7 +328,7 @@
     "https://raw.githubusercontent.com/xoxd-ai/bazel-registry/main/modules/tummycrypt_tinyland_content_types/1.0.0/MODULE.bazel": "5132d90e80d7afcd76b75d1234b509b4849c51e388daf38a7dca986302fc9249",
     "https://raw.githubusercontent.com/xoxd-ai/bazel-registry/main/modules/tummycrypt_tinyland_content_types/1.0.0/source.json": "dd00ba16cc390330099f650d6f8d94deaf7f14c06399d0ce19d91a0af1e23be0",
     "https://raw.githubusercontent.com/xoxd-ai/bazel-registry/main/modules/tummycrypt_tinyland_user_resolution/0.2.3/MODULE.bazel": "a3032c9aa32892b4c1b72ec975df49eed4986c744d67413bebb4da26abc695be",
-    "https://raw.githubusercontent.com/xoxd-ai/bazel-registry/main/modules/tummycrypt_tinyland_user_resolution/0.2.3/source.json": "0540cec85cfc22b0aa519b355b0d919d9d8a7e7aff9f470c433dba552a4f45bf",
+    "https://raw.githubusercontent.com/xoxd-ai/bazel-registry/main/modules/tummycrypt_tinyland_user_resolution/0.2.3/source.json": "b9530bda989337e21d24843eeda91c912611fdba069dbd63276b938751f7e7de",
     "https://raw.githubusercontent.com/xoxd-ai/bazel-registry/main/modules/upb/0.0.0-20220923-a547704/MODULE.bazel": "not found",
     "https://raw.githubusercontent.com/xoxd-ai/bazel-registry/main/modules/yq.bzl/0.1.1/MODULE.bazel": "not found",
     "https://raw.githubusercontent.com/xoxd-ai/bazel-registry/main/modules/yq.bzl/0.3.2/MODULE.bazel": "not found",
