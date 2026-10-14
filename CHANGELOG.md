@@ -1,5 +1,63 @@
 # Changelog
 
+## 1.1.0 — 2026-10-14
+
+Minor release on the 1.x line that folds the retired
+`tummycrypt_tinyland_user_resolution` module into this package (RU2, RU7).
+The RU1/RU13 stack is unchanged from 1.0.0 (TypeScript 7.0.2, vite 8.3.3,
+vitest 5.0.3, all exact), and 1.0.0 is the RU10 major for that stack change,
+so this is a minor. Bazel module `tummycrypt_tinyland_content` stays the only
+distribution path (RU6); the package is `private` and not published (RU8).
+
+Added
+
+- User resolution, merged from the retired
+  `tummycrypt_tinyland_user_resolution` module
+  (`@tummycrypt/tinyland-user-resolution` 0.2.3, repo
+  `xoxd-ai/tinyland-user-resolution`, archived). Sources are byte-identical
+  to the 0.2.3 release (and to the tinyland.dev monorepo copy). The test
+  suite is the monorepo copy, which adds the TIN-2788 directory-authority
+  cases (a directory record wins over a same-handle profile, an empty
+  directory resolves to `null`); only its import path changes.
+  - New subpath export `@tummycrypt/tinyland-content/user-resolution` with
+    the original API: `configure`, `getConfig`, `resetConfig`, `resolveUser`,
+    `userExists`, `getAllUserHandles`, `clearUserResolutionCache`,
+    `RESERVED_ROUTES`, `isReservedRoute` and the `AdminUser`, `Profile`,
+    `ResolvedUser` and `UserResolutionConfig` types.
+  - The root facade keeps the names it already re-exported (`resolveUser`,
+    `userExists`, `getAllUserHandlesFromResolution`,
+    `clearUserResolutionCache`, `RESERVED_ROUTES`, `isReservedRoute`,
+    `configureUserResolution`, `getUserResolutionConfig`,
+    `resetUserResolutionConfig` and the `AdminUser`, `ResolvedUser` and
+    `UserResolutionConfig` types); they now resolve to the in-package code.
+    The user-resolution `Profile` input type is only on the subpath, because
+    the root `Profile` is the profile loader's type.
+
+Changed (build graph)
+
+- `bazel_dep(name = "tummycrypt_tinyland_user_resolution")` and its
+  `npm_link_package` are removed from `//:tinyland_content`, `//:typecheck`
+  and `//:test`. The only in-house dependency left is
+  `tummycrypt_tinyland_content_types` 1.0.0.
+
+Migration (user resolution consumers)
+
+- Drop `bazel_dep(name = "tummycrypt_tinyland_user_resolution", ...)`, any
+  `single_version_override` and its `npm_link_package`, and depend on
+  `tummycrypt_tinyland_content` 1.1.0 or later.
+- Replace `from '@tummycrypt/tinyland-user-resolution'` with
+  `from '@tummycrypt/tinyland-content/user-resolution'` (same names), or
+  import the aliased names from `@tummycrypt/tinyland-content`.
+- Configuration state: the subpath and the root facade share one
+  configuration and one profile cache. The standalone package does NOT share
+  them: a process that calls `configure()` on
+  `@tummycrypt/tinyland-user-resolution` no longer configures the content
+  facade (before 1.1.0 the facade re-exported the standalone module). Move
+  every import in a process to the content subpath or facade in the same
+  change.
+- Behavior is otherwise unchanged: `configure()` is still required before
+  use and the profile cache TTL is still 60 seconds.
+
 ## 1.0.0 — 2026-10-14
 
 Major release for the estate stack uplift (RU1, RU5, RU10, RU13). The public

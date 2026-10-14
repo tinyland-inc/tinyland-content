@@ -240,8 +240,11 @@ export {
   resetConfig as resetProfileLoaderConfig,
 } from './profile-loader/index.js';
 
-// --- User resolution re-exports (from tinyland-user-resolution) ---
-export type { AdminUser, ResolvedUser, UserResolutionConfig } from '@tummycrypt/tinyland-user-resolution';
+// --- User resolution (merged from tummycrypt_tinyland_user_resolution 0.2.x) ---
+// The full original API, including configure/getConfig/resetConfig and the
+// Profile input type, is the ./user-resolution subpath export. The facade keeps
+// its existing aliased names.
+export type { AdminUser, ResolvedUser, UserResolutionConfig } from './user-resolution/index.js';
 export {
   resolveUser,
   userExists,
@@ -252,7 +255,7 @@ export {
   configure as configureUserResolution,
   getConfig as getUserResolutionConfig,
   resetConfig as resetUserResolutionConfig,
-} from '@tummycrypt/tinyland-user-resolution';
+} from './user-resolution/index.js';
 
 // --- Activity feed (merged from tummycrypt_tinyland_activity_feed 0.2.x) ---
 // The full original API, including configure/getConfig/resetConfig, is the
