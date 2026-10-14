@@ -1,6 +1,7 @@
 {
   "name": "@tummycrypt/tinyland-content",
-  "version": "0.10.0",
+  "version": "1.0.0",
+  "private": true,
   "description": "Content management services for markdown-based content with versioning, scheduling, and relationship resolution",
   "type": "module",
   "license": "Zlib AND LicenseRef-Tinyland-Proprietary",
@@ -68,13 +69,14 @@
     "diff": "^8.0.3"
   },
   "devDependencies": {
-    "@fast-check/vitest": "^0.2.4",
+    "@fast-check/vitest": "^0.5.0",
     "@types/diff": "^6.0.0",
     "@types/node": "^22.0.0",
-    "fast-check": "^4.3.0",
-    "typescript": "^5.0.0",
-    "vitest": "^4.0.0",
-    "publint": "^0.3.18"
+    "fast-check": "^4.10.2",
+    "publint": "^0.3.25",
+    "typescript": "7.0.2",
+    "vite": "8.3.3",
+    "vitest": "5.0.3"
   },
   "peerDependencies": {
     "node-cron": ">=3.0.0",
@@ -93,11 +95,11 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/tinyland-inc/tinyland-content.git"
+    "url": "git+https://github.com/xoxd-ai/tinyland-content.git"
   },
   "packageManager": "pnpm@10.13.1",
-  "homepage": "https://github.com/tinyland-inc/tinyland-content",
+  "homepage": "https://github.com/xoxd-ai/tinyland-content",
   "bugs": {
-    "url": "https://github.com/tinyland-inc/tinyland-content/issues"
+    "url": "https://github.com/xoxd-ai/tinyland-content/issues"
   }
 }
