@@ -12,7 +12,7 @@ describe('content candidate version parity', () => {
     const packageVersion = packageRule?.match(/\bversion\s*=\s*"([^"]+)"/)?.[1];
 
     expect(manifest.name).toBe('@tummycrypt/tinyland-content');
-    expect(manifest.version).toBe('0.10.0');
+    expect(manifest.version).toBe('1.0.0');
     expect(moduleVersion).toBe(manifest.version);
     expect(packageVersion).toBe(manifest.version);
   });

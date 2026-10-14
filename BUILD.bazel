@@ -1,8 +1,9 @@
 """
 BUILD.bazel for @tummycrypt/tinyland-content.
 
-Dual-mode build: works with both pnpm (standalone) and Bazel (CI/production).
-  Standalone: cd packages/tinyland-content && pnpm build
+  Bazel:      bazel build //:pkg && bazel test //...
+  Consumers:  bazel_dep(name = "tummycrypt_tinyland_content", version = "1.0.0")
+              from xoxd-ai/bazel-registry; the package is not published to npm.
 """
 
 load("@aspect_rules_js//js:defs.bzl", "js_test")
@@ -62,7 +63,7 @@ npm_package(
         ":tinyland_content",
     ],
     package = "@tummycrypt/tinyland-content",
-    version = "0.10.0",
+    version = "1.0.0",
     visibility = ["//visibility:public"],
 )
 
@@ -92,6 +93,33 @@ vitest_bin.vitest_test(
         "$(rootpath vitest.config.ts)",
     ],
     log_level = "info",
+    visibility = ["//visibility:public"],
+)
+
+ts_project(
+    name = "typecheck",
+    srcs = glob(
+        ["src/**/*.ts"],
+        exclude = [
+            "src/**/*.test.ts",
+            "src/**/*.spec.ts",
+        ],
+    ) + ["package.json"],
+    declaration = False,
+    no_emit = True,
+    transpiler = "tsc",
+    tsconfig = ":tsconfig.json",
+    validate = False,
+    deps = [
+        ":node_modules",
+        ":node_modules/gray-matter",
+        ":node_modules/nanoid",
+        ":node_modules/diff",
+        ":node_modules/@types/diff",
+        ":node_modules/@types/node",
+        ":node_modules/@tummycrypt/tinyland-content-types",
+        ":node_modules/@tummycrypt/tinyland-user-resolution",
+    ],
     visibility = ["//visibility:public"],
 )
 

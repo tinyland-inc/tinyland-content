@@ -1,5 +1,50 @@
 # Changelog
 
+## 1.0.0 — 2026-10-14
+
+Major release for the estate stack uplift (RU1, RU5, RU10, RU13). The public
+API is unchanged from 0.10.0: every export, subpath and signature is the same.
+The build toolchain and the first-party Bazel dependency move, so this is
+the RU10 major. Bazel module `tummycrypt_tinyland_content` stays the only
+distribution path (RU6); the package is now `private` and is not published to
+npm (RU8).
+
+Changed
+
+- TypeScript 7.0.2 (the native compiler) builds and type-checks the package.
+  `typescript`, `vite` (8.3.3) and `vitest` (5.0.3) are pinned exactly (RU5).
+  `@fast-check/vitest` ^0.5.0, `fast-check` ^4.10.2 and `publint` ^0.3.25
+  follow the vitest 5 line.
+- `tsconfig.json` sets `lib: ["ES2022"]` and `types: ["node"]`, because
+  TypeScript 6 and later no longer load every `@types/*` package by default.
+- MODULE.bazel: `aspect_rules_ts` 3.10.1 with the `typescript` extension at
+  7.0.2 (replacing the `ext` extension at 5.9.3), and
+  `tummycrypt_tinyland_content_types` re-pinned from 0.3.1 to 1.0.0 (its own
+  RU1 major; visibility fails closed and `EventContent` has 4 more optional
+  fields).
+- New `//:typecheck` target (no emit). CI runs it next to `//:pkg`, `//:test`
+  and `//:package_artifact_test`.
+- `.bazelrc` resolves in-house modules from `xoxd-ai/bazel-registry`, and the
+  package metadata points at `xoxd-ai/tinyland-content`.
+
+Migration (all consumers)
+
+- Re-pin `bazel_dep(name = "tummycrypt_tinyland_content", version = "1.0.0")`
+  and drop any `single_version_override` that pins an older content version.
+  Imports do not change.
+- Consumers that still pin `tummycrypt_tinyland_content_types` below 1.0.0
+  are raised to 1.0.0 by MVS (same `compatibility_level`). Code that relied on
+  absent or unknown visibility being treated as public must now set it
+  explicitly.
+- Consumers of the retired `tummycrypt_tinyland_activity_feed` module: drop
+  that `bazel_dep`, its override and its `npm_link_package`, and replace
+  `from '@tummycrypt/tinyland-activity-feed'` with
+  `from '@tummycrypt/tinyland-content/activity-feed'` (same names, available
+  since 0.5.0). The same applies to the event-loader, product-loader,
+  profile-loader, publishing-hooks and scheduled-publishing modules folded in
+  0.6.0 to 0.10.0.
+
+
 ## 0.10.0 — 2026-10-14
 
 Minor release that folds the retired `tummycrypt_tinyland_scheduled_publishing`
