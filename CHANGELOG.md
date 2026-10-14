@@ -1,5 +1,48 @@
 # Changelog
 
+## 0.10.0 — 2026-10-14
+
+Minor release that folds the retired `tummycrypt_tinyland_scheduled_publishing`
+module into this package (RU2, RU7). Additive for consumers: no existing
+export or signature changes, and the framework stack is unchanged
+(TypeScript 5.9, Node >= 22), so this is not the RU1 major. Bazel module
+`tummycrypt_tinyland_content` is the only distribution path (RU6).
+
+Added
+
+- Scheduled publishing lifecycle and file-backed store, merged from the
+  retired `tummycrypt_tinyland_scheduled_publishing` module
+  (`@tummycrypt/tinyland-scheduled-publishing` 0.2.2, repo
+  `xoxd-ai/tinyland-scheduled-publishing`, archived). The source is
+  byte-identical to the 0.2.2 release (and to the tinyland.dev monorepo copy);
+  the test suite only changes its import path.
+  - New subpath export `@tummycrypt/tinyland-content/scheduled-publishing`
+    with the original API: `configure`, `getCurrentConfig`, `resetConfig`,
+    `isInitialized`, `initializeScheduledPublishing`,
+    `shutdownScheduledPublishing`, `scheduleContent`, `cancelSchedule`,
+    `processScheduledItems`, `createFileBasedService` and the `ScheduledItem`,
+    `ScheduledPublishingData`, `ScheduledPublishingService`,
+    `ScheduledPublishingLogger` and `ScheduledPublishingConfig` types.
+  - The root facade does not re-export these names. The root already exports
+    a `ScheduledPublishingService` class and a `ScheduledItem` type from
+    `./scheduling` with different shapes, so import the merged API from the
+    subpath.
+  - New tests pin the file-backed store (schedule replace and cancel, due vs
+    future items, retry on publish failure, poll timer lifecycle), which the
+    0.2.2 suite did not cover.
+
+Migration (scheduled publishing consumers)
+
+- Drop `bazel_dep(name = "tummycrypt_tinyland_scheduled_publishing", ...)`,
+  any `single_version_override` and its `npm_link_package`, and depend on
+  `tummycrypt_tinyland_content` 0.10.0 or later.
+- Replace `from @tummycrypt/tinyland-scheduled-publishing` with
+  `from @tummycrypt/tinyland-content/scheduled-publishing` (same names).
+- Behavior is unchanged: the store is still
+  `data/scheduled-publishing.json` under `process.cwd()`, the poll interval is
+  still 60 seconds, and module state (`configure`, `isInitialized`) is still
+  per module instance.
+
 ## 0.9.0 — 2026-10-14
 
 Minor release that folds the retired `tummycrypt_tinyland_publishing_hooks`
