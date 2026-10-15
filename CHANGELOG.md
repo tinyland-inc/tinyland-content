@@ -1,5 +1,60 @@
 # Changelog
 
+## 1.2.0 — 2026-10-15
+
+Minor release on the 1.x line that folds the retired
+`tummycrypt_tinyland_video_thumbnails` module into this package (RU2, RU7).
+The RU1/RU13 stack is unchanged from 1.0.0 (TypeScript 7.0.2, vite 8.3.3,
+vitest 5.0.3, all exact), and 1.0.0 is the RU10 major for that stack change,
+so this is a minor. Bazel module `tummycrypt_tinyland_content` stays the only
+distribution path (RU6); the package is `private` and not published (RU8).
+
+Added
+
+- Video thumbnail resolver for YouTube, PeerTube and Vimeo with an in-memory
+  cache, merged from the retired `tummycrypt_tinyland_video_thumbnails`
+  module (`@tummycrypt/tinyland-video-thumbnails` 0.2.2, registry entries
+  0.2.2 and 0.2.3 both built from the v0.2.2 tag, repo
+  `xoxd-ai/tinyland-video-thumbnails`, archived). Sources are
+  byte-identical to the v0.2.2 tag and to the tinyland.dev monorepo copy,
+  except the `detectPlatform` host check below; the tests only change their
+  import paths and add the lookalike-host cases. The sources type-check
+  under TypeScript 7.0.2.
+  - New subpath export `@tummycrypt/tinyland-content/video-thumbnails` with
+    the original API: `getVideoThumbnail`, `detectPlatform`,
+    `extractYouTubeId`, `fetchYouTubeThumbnail`, `fetchPeerTubeThumbnail`,
+    `fetchVimeoThumbnail`, `clearThumbnailCache`, `getCacheStats`,
+    `pruneExpiredCache`, `CACHE_TTL` and the `ThumbnailResult`,
+    `CacheEntry` and `Platform` types.
+  - The root facade is unchanged. It already exports a different
+    `extractYouTubeId` and the synchronous `getVideoThumbnailUrl` from
+    `ContentRelationshipService`, so the resolver is only on the subpath.
+- This module never depended on `tummycrypt_tinyland_video_thumbnails`, so
+  the build graph is unchanged.
+
+Fixed (security)
+
+- `detectPlatform` matched hosts by substring (`hostname.includes`), so a
+  lookalike host such as `youtube.com.example.net`, `evil-youtube.com` or
+  `notvimeo.com` was classified as YouTube or Vimeo (CodeQL
+  `js/incomplete-url-substring-sanitization`). It now requires the exact host
+  or a dot-separated subdomain of `youtube.com`, `youtu.be` or `vimeo.com`.
+  Real hosts and their subdomains (`www.`, `m.`, `music.`, `player.`) are
+  unchanged. A lookalike host now returns `null`, or `peertube` when its path
+  is `/videos/watch/` or `/w/`, as for any other host.
+
+Migration (video thumbnail consumers)
+
+- Drop `bazel_dep(name = "tummycrypt_tinyland_video_thumbnails", ...)`, any
+  `single_version_override` and its `npm_link_package`, and depend on
+  `tummycrypt_tinyland_content` 1.2.0 or later. Consumers still on the 0.x
+  line also take the 1.0.0 stack migration below.
+- Replace `from '@tummycrypt/tinyland-video-thumbnails'` with
+  `from '@tummycrypt/tinyland-content/video-thumbnails'` (same names).
+- Behavior is otherwise unchanged: the cache is per process with a 24 hour TTL,
+  YouTube probes maxres, hq, then mq with HEAD requests, PeerTube reads
+  `/api/v1/videos/{uuid}` and Vimeo uses oEmbed.
+
 ## 1.1.0 — 2026-10-14
 
 Minor release on the 1.x line that folds the retired

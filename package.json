@@ -1,6 +1,6 @@
 {
   "name": "@tummycrypt/tinyland-content",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "private": true,
   "description": "Content management services for markdown-based content with versioning, scheduling, and relationship resolution",
   "type": "module",
@@ -52,6 +52,10 @@
     "./user-resolution": {
       "types": "./dist/user-resolution/index.d.ts",
       "import": "./dist/user-resolution/index.js"
+    },
+    "./video-thumbnails": {
+      "types": "./dist/video-thumbnails/index.d.ts",
+      "import": "./dist/video-thumbnails/index.js"
     }
   },
   "files": [
