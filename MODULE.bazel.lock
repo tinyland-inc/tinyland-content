@@ -333,7 +333,7 @@
     "@@aspect_rules_js+//npm:extensions.bzl%pnpm": {
       "general": {
         "bzlTransitiveDigest": "+38sdUshoDaaBOpNBG17zT25s0y5uiGlxqyEtzgmzVs=",
-        "usagesDigest": "rxvF9OztKAib6bMIrGZt+T+XFMtq3XIhy8yzxVl5ACA=",
+        "usagesDigest": "0dVJ8sBQHceM0J7NH/Wogx0MT/FkuqzZ75nsq7xDx/w=",
         "recordedFileInputs": {},
         "recordedDirentsInputs": {},
         "envVariables": {},
@@ -726,7 +726,7 @@
     "@@rules_nodejs+//nodejs:extensions.bzl%node": {
       "general": {
         "bzlTransitiveDigest": "4pUxCNc22K4I+6+4Nxu52Hur12tFRfa1JMsN5mdDv60=",
-        "usagesDigest": "EsogYh6LkLRjTlcAKPKB0B7muwMg5GeQQ7JZVCIowTo=",
+        "usagesDigest": "mlDM7xDBn50AImxK8cPgMyBxVxtywi9RdXR2A7Vi+k0=",
         "recordedFileInputs": {},
         "recordedDirentsInputs": {},
         "envVariables": {},
