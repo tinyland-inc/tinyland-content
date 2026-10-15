@@ -2,7 +2,7 @@
 BUILD.bazel for @tummycrypt/tinyland-content.
 
   Bazel:      bazel build //:pkg && bazel test //...
-  Consumers:  bazel_dep(name = "tummycrypt_tinyland_content", version = "1.1.0")
+  Consumers:  bazel_dep(name = "tummycrypt_tinyland_content", version = "1.2.0")
               from xoxd-ai/bazel-registry; the package is not published to npm.
 """
 
@@ -57,7 +57,7 @@ npm_package(
         ":tinyland_content",
     ],
     package = "@tummycrypt/tinyland-content",
-    version = "1.1.0",
+    version = "1.2.0",
     visibility = ["//visibility:public"],
 )
 
