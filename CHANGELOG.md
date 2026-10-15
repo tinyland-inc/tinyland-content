@@ -15,9 +15,10 @@ Added
   cache, merged from the retired `tummycrypt_tinyland_video_thumbnails`
   module (`@tummycrypt/tinyland-video-thumbnails` 0.2.2, registry entries
   0.2.2 and 0.2.3 both built from the v0.2.2 tag, repo
-  `xoxd-ai/tinyland-video-thumbnails`, archived). Sources and tests are
-  byte-identical to the v0.2.2 tag and to the tinyland.dev monorepo copy;
-  the tests only change their import paths. The sources type-check unchanged
+  `xoxd-ai/tinyland-video-thumbnails`, archived). Sources are
+  byte-identical to the v0.2.2 tag and to the tinyland.dev monorepo copy,
+  except the `detectPlatform` host check below; the tests only change their
+  import paths and add the lookalike-host cases. The sources type-check
   under TypeScript 7.0.2.
   - New subpath export `@tummycrypt/tinyland-content/video-thumbnails` with
     the original API: `getVideoThumbnail`, `detectPlatform`,
@@ -31,6 +32,17 @@ Added
 - This module never depended on `tummycrypt_tinyland_video_thumbnails`, so
   the build graph is unchanged.
 
+Fixed (security)
+
+- `detectPlatform` matched hosts by substring (`hostname.includes`), so a
+  lookalike host such as `youtube.com.example.net`, `evil-youtube.com` or
+  `notvimeo.com` was classified as YouTube or Vimeo (CodeQL
+  `js/incomplete-url-substring-sanitization`). It now requires the exact host
+  or a dot-separated subdomain of `youtube.com`, `youtu.be` or `vimeo.com`.
+  Real hosts and their subdomains (`www.`, `m.`, `music.`, `player.`) are
+  unchanged. A lookalike host now returns `null`, or `peertube` when its path
+  is `/videos/watch/` or `/w/`, as for any other host.
+
 Migration (video thumbnail consumers)
 
 - Drop `bazel_dep(name = "tummycrypt_tinyland_video_thumbnails", ...)`, any
@@ -39,7 +51,7 @@ Migration (video thumbnail consumers)
   line also take the 1.0.0 stack migration below.
 - Replace `from '@tummycrypt/tinyland-video-thumbnails'` with
   `from '@tummycrypt/tinyland-content/video-thumbnails'` (same names).
-- Behavior is unchanged: the cache is per process with a 24 hour TTL,
+- Behavior is otherwise unchanged: the cache is per process with a 24 hour TTL,
   YouTube probes maxres, hq, then mq with HEAD requests, PeerTube reads
   `/api/v1/videos/{uuid}` and Vimeo uses oEmbed.
 

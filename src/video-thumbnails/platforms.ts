@@ -6,15 +6,22 @@ import type { Platform } from './types.js';
 
 
 
+// Match the registrable host exactly or as a dot-separated subdomain, so a
+// lookalike such as youtube.com.example.net or notvimeo.com is not treated
+// as YouTube or Vimeo (CodeQL js/incomplete-url-substring-sanitization).
+function isHostOrSubdomain(hostname: string, domain: string): boolean {
+	return hostname === domain || hostname.endsWith(`.${domain}`);
+}
+
 export function detectPlatform(url: string): Platform | null {
 	try {
 		const urlObj = new URL(url);
 		const hostname = urlObj.hostname.toLowerCase();
 
-		if (hostname.includes('youtube.com') || hostname.includes('youtu.be')) {
+		if (isHostOrSubdomain(hostname, 'youtube.com') || isHostOrSubdomain(hostname, 'youtu.be')) {
 			return 'youtube';
 		}
-		if (hostname.includes('vimeo.com')) {
+		if (isHostOrSubdomain(hostname, 'vimeo.com')) {
 			return 'vimeo';
 		}
 		

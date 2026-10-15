@@ -84,6 +84,20 @@ describe('detectPlatform', () => {
 		it('returns null for random text', () => {
 			expect(detectPlatform('hello world youtube')).toBeNull();
 		});
+
+		it('does not match lookalike hosts by substring', () => {
+			expect(detectPlatform('https://youtube.com.example.net/watch?v=abc123')).toBeNull();
+			expect(detectPlatform('https://evil-youtube.com/watch?v=abc123')).toBeNull();
+			expect(detectPlatform('https://notyoutu.be/abc123')).toBeNull();
+			expect(detectPlatform('https://vimeo.com.example.net/123456')).toBeNull();
+			expect(detectPlatform('https://notvimeo.com/123456')).toBeNull();
+		});
+
+		it('still matches subdomains of the real hosts', () => {
+			expect(detectPlatform('https://m.youtube.com/watch?v=abc123')).toBe('youtube');
+			expect(detectPlatform('https://music.youtube.com/watch?v=abc123')).toBe('youtube');
+			expect(detectPlatform('https://player.vimeo.com/video/123456')).toBe('vimeo');
+		});
 	});
 });
 
