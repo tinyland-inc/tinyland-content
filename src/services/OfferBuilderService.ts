@@ -209,8 +209,8 @@ export const TRANSACTION_MAPPINGS: Record<string, TransactionMapping> = {
     isSubscription: true,
     isDonation: false,
   },
-  talar: {
-    transactionType: 'talar',
+  taler: {
+    transactionType: 'taler',
     schemaType: 'Offer',
     paymentMethods: ['BankTransfer', 'PaymentService'],
     defaultAvailability: 'InStock',
@@ -538,7 +538,7 @@ export class OfferBuilderService {
       monero: 'Monero',
       stripe: 'Credit Card',
       polar: 'Polar Subscription',
-      talar: 'GNU Taler',
+      taler: 'GNU Taler',
       repository: 'Source Code',
       documentation: 'Documentation',
       booking: 'Book Appointment',
